@@ -1,37 +1,36 @@
 from PIL import Image, ImageDraw
+import numpy as np
 
 
-# TODO: test formats (raw, pgm, ppm)
-
-def load(filename, show=False, debug=False):
-    img = Image.open(filename)
-    if show:
-        img.show()
-    if debug:
-        print(img.format)
-        print(img.mode)
+def load(filename, w=None, h=None):
+    if filename.lower().endswith('.raw'):
+        img = np.fromfile(filename, dtype=np.uint8)
+        img = img.reshape((h, w))
+    else:
+        img = np.array(Image.open(filename))
     return img
 
 
 def save(image, name):
-    image.save(name)
+    im = Image.fromarray(image)
+    im.save(name)
 
 
-def get_pixel(image, row, column):
-    image = image.load()
-    return image[row, column]
+def get_pixel(image, x, y):
+    return image[x][y]
 
 
-# TODO: check what to do in other pixel formats (binary, grey scale, etc)
-def put_pixel(image, x, y, r, g, b):
-    image = image.load()
-    image[x, y] = (r, g, b)
+def put_pixel(image, x, y, pixel):
+    image[x][y] = pixel
 
 
 # ul = upper-left
 def paste_section(image_to_cut, x_start, y_start, x_end, y_end, new_image, new_ul_x, new_ul_y):
+    image_to_cut = Image.fromarray(image_to_cut)
+    new_image = Image.fromarray(new_image)
     section = image_to_cut.crop((x_start, y_start, x_end, y_end))
     new_image.paste(section, (new_ul_x, new_ul_y))
+    return np.array(new_image)
 
 
 def bin_circle(radius=50, img_height=200, img_width=200):
