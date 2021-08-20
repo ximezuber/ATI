@@ -1,8 +1,8 @@
 from PIL import Image, ImageDraw
 import numpy as np
+import imageio
 
 import matplotlib.pyplot as plt
-
 
 def load(filename, w=None, h=None):
     if filename.lower().endswith('.raw'):
@@ -61,13 +61,13 @@ def bin_rectangle(hor_len=150, ver_len=150, img_height=200, img_width=200):
 
 
 def add(im1, im2):
-    ans = np.add(im1.astype(np.uint32), im2.astype(np.uint32))
+    ans = np.add(im1, im2)
     ans = normalize(ans, 0, 255+255)
     return ans
 
 
 def subtract(im1, im2):
-    ans = np.subtract(im1.astype(np.int32), im2.astype(np.int32))
+    ans = np.subtract(im1, im2)
     ans = normalize(ans, -255, 255)
     return ans
 
@@ -111,8 +111,7 @@ def pixels_info(pixels):
     mean = np.mean(pixels, axis=(0, 1))
     return count, mean
 
-
-def plot_hist_rgb(image):
+def plot_hist(image):
     image = np.array(image).astype(float)
     if len(image.shape) > 2:
         color = ("red", "green", "blue")
@@ -124,7 +123,7 @@ def plot_hist_rgb(image):
             channel = image[:, :, i]
             plt.hist(
                 channel.ravel(),
-                bins=256,
+                bins= 256,
                 weights=np.zeros_like(channel).ravel() + 1.0 / channel.size,
                 color=color[i],
             )
