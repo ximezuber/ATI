@@ -3,6 +3,8 @@ from image_utils import *
 from PIL import Image, ImageTk
 from tkinter import filedialog
 
+from mouse_selector import Application
+
 
 class ImageWindow(Toplevel):
     img = None
@@ -20,9 +22,17 @@ class ImageWindow(Toplevel):
                         ('Multiply', self.multiply_other_image),
                         ('Show RGB bands', self.show_rgb),
                         ('Show RGB histogram', self.show_hist_rgb),
-                        ('Show HSV bands', self.show_hsv)
+                        ('Show HSV bands', self.show_hsv),
+                        ('Select', self.select)
                         ]
+        self.in_select_buttons = [('Get info', self.get_info),
+                                  ('Done', self.back_to_normal)]
         self.main_window = main_window
+        self.image_frame = Frame(self)
+        self.image_frame.pack()
+        self.buttons_frame = Frame(self)
+        self.buttons_frame.pack()
+        self.selector = None
 
     def update_image(self):
         self.add_image_from_array(self.img, self.title(), maintain_title=True)
@@ -39,13 +49,13 @@ class ImageWindow(Toplevel):
     def add_image_from_array(self, array, filename, maintain_title=False):
         self.img = array
         self.tk_img = ImageTk.PhotoImage(image=Image.fromarray(array))
-        label = Label(self, image=self.tk_img)
-        label.grid(row=0, column=0, columnspan=len(self.buttons))
+        label = Label(self.image_frame, image=self.tk_img)
+        label.pack()
 
         max_buttons_per_row = 5
         for i, button in enumerate(self.buttons):
-            new_button = Button(self, text=button[0], command=button[1])
-            new_button.grid(row=(i//max_buttons_per_row)+1, column=i % max_buttons_per_row)
+            new_button = Button(self.buttons_frame, text=button[0], command=button[1])
+            new_button.grid(row=(i // max_buttons_per_row), column=i % max_buttons_per_row)
 
         starting_title = filename
         title = starting_title
@@ -112,7 +122,9 @@ class ImageWindow(Toplevel):
             new_entry.grid(row=4, column=0, columnspan=2)
 
             button = Button(frame, text="Enter",
-                            command=(lambda: self._show_modified_pixel(top, frame, x_entry, y_entry, int(new_entry.get()))), padx=20)
+                            command=(
+                                lambda: self._show_modified_pixel(top, frame, x_entry, y_entry, int(new_entry.get()))),
+                            padx=20)
             button.grid(row=4, column=2)
         else:
             top = Toplevel()
@@ -143,7 +155,8 @@ class ImageWindow(Toplevel):
             b_entry.grid(row=5, column=2)
 
             button = Button(frame, text="Enter",
-                            command=(lambda: self._show_modified_pixel(top, frame, x_entry, y_entry, (int(r_entry.get()), int(g_entry.get()), int(b_entry.get())))),
+                            command=(lambda: self._show_modified_pixel(top, frame, x_entry, y_entry, (
+                                int(r_entry.get()), int(g_entry.get()), int(b_entry.get())))),
                             padx=20)
             button.grid(row=6, columnspan=3)
 
@@ -180,6 +193,48 @@ class ImageWindow(Toplevel):
 
     def show_hist_rgb(self):
         plot_hist_rgb(self.img)
+
+    def select(self):
+        for widget in self.image_frame.winfo_children():
+            widget.destroy()
+        self.selector = Application(self.tk_img, self.image_frame)
+        self.selector.pack()
+        for widget in self.buttons_frame.winfo_children():
+            widget.destroy()
+        max_buttons_per_row = 5
+        for i, button in enumerate(self.in_select_buttons):
+            new_button = Button(self.buttons_frame, text=button[0], command=button[1])
+            new_button.grid(row=(i // max_buttons_per_row), column=i % max_buttons_per_row)
+
+    def back_to_normal(self):
+        for widget in self.image_frame.winfo_children():
+            widget.destroy()
+        self.selector = None
+        label = Label(self.image_frame, image=self.tk_img)
+        label.pack()
+
+        for widget in self.buttons_frame.winfo_children():
+            widget.destroy()
+        max_buttons_per_row = 5
+        for i, button in enumerate(self.buttons):
+            new_button = Button(self.buttons_frame, text=button[0], command=button[1])
+            new_button.grid(row=(i // max_buttons_per_row), column=i % max_buttons_per_row)
+
+    def get_info(self):
+        start, end = self.selector.position_tracker.selection()
+        print(start, end)
+        x_start = min(start[0], end[0])
+        y_start = min(start[1], end[1])
+        x_end = max(start[0], end[0])
+        y_end = max(start[1], end[1])
+        image = self.img[y_start:y_end, x_start:x_end]
+
+        new_window = Toplevel()
+        frame = Frame(new_window)
+        frame.pack()
+        pixels, mean = pixels_info(image)
+        Label(frame, text=f"Pixels: {pixels}, Mean: {mean}").grid(row=0, column=0, columnspan=3)
+        Button(frame, text="Done", command=new_window.destroy, padx=20).grid(row=2, column=1)
 
     def _sum_with_other(self, img):
         new_img = add(self.img, img)
