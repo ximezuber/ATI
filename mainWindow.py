@@ -1,7 +1,10 @@
+from matplotlib.pyplot import title
+from secondWindow import secondWindow
 from tkinter import * 
 from image_utils import *
 from PIL import Image, ImageTk
 from tkinter import filedialog, messagebox, ttk
+
 
 class mainWindow:
 
@@ -28,7 +31,7 @@ class mainWindow:
         self.edit_menu = Menu(self.menubar, tearoff=0)
         self.edit_menu.add_command(label="Get Pixel", command=self.get_pixel_value)
         self.edit_menu.add_command(label="Modify Pixel", command=self.modify_pixel)
-        self.edit_menu.add_command(label="Copy into Other")   
+        self.edit_menu.add_command(label="Copy into Other", command=self.copy_img_into_other)   
         self.edit_menu.add_separator()
         self.edit_menu.add_command(label="Add")    
         self.edit_menu.add_command(label="Substract")
@@ -43,31 +46,6 @@ class mainWindow:
 
         self.menubar.add_cascade(label="Advance", menu=self.advance_menu)
 
-        # # Drop down menu
-        # self.options = OptionMenu(self.root, self.clicked, *self.commands)
-        # self.options.grid(row=0, column=0, columnspan=3, sticky="ew")
-
-        # # Button to select option from drop down menu
-        # self.select_button = Button(self.root, text="Select", command=self.show)
-        # self.select_button.grid(row=0, column=3, sticky="ew")
-
-        # # Entry n1
-        # self.entry = Entry(self.root, width=40)
-        # self.entry.grid(row=1, column=0, columnspan=2)
-
-        # # Entry n2
-        # self.entry2 = Entry(self.root, width=40)
-
-        # # Button to run option
-        # self.run_button = Button(self.root, text=self.clicked.get(), command=self.open_image)
-        # self.run_button.grid(row=1,column=3)
-
-        # # Button to search entry n1
-        # self.search_button = Button(self.root, text= "Search", command=open_file_window)
-        # self.search_button.grid(row=1, column=2)
-
-        # # Button to search entry n2
-        # self.search_button2 = Button(self.root, text= "Search")
         self.frame = Frame(
             self.root, 
             height=self.root.winfo_screenheight() / 8,
@@ -79,138 +57,155 @@ class mainWindow:
 
         self.root.pack_propagate(0)
 
-        self.img = None
+        self.windows = []
+        self.result_img = None
 
         self.root.mainloop()
 
 
     # Open file window
     def open_file_window(self):
-        global tk_img
+        # See if windows were closed and erase from list
+        self.check_windows()
 
-        self.frame.pack_forget()
-        self.frame = Frame(self.root)
-        self.frame.pack()
+        window = secondWindow(len(self.windows), self.root)
 
-        self.root.pack_propagate(1)
+        self.windows.append(window)
 
         filename = filedialog.askopenfilename(initialdir="./photos", title="Select an Image" , filetypes=(("raw", "*.RAW"), ("pgm", "*.pgm"), ("ppm", "*.ppm"), ("jpg", "*.jpg"), ("png", "*.png")))
         
         if filename.lower().endswith('.raw'):
 
-            Label(self.frame, text="Enter image width:").grid(row=0, column=0)   
-            self.entry1 = Entry(self.frame, width=10)
+            Label(window.frame, text="Enter image width:").grid(row=0, column=0)   
+            self.entry1 = Entry(window.frame, width=10)
             self.entry1.grid(row=1, column=0)
 
-            Label(self.frame, text="Enter image height:").grid(row=0, column=1)   
-            self.entry2 = Entry(self.frame, width=10)
+            Label(window.frame, text="Enter image height:").grid(row=0, column=1)   
+            self.entry2 = Entry(window.frame, width=10)
             self.entry2.grid(row=1, column=1)
 
-            button = Button(self.frame, text="Enter", command= (lambda : self.load_raw_image(filename)), padx=20)
-            button.grid(row=1, column=2)
-            
+            button = Button(window.frame, text="Enter", command= (lambda : self.load_raw_image(filename, window)), padx=20)
+            button.grid(row=1, column=2)    
         else:
-            self.img = load(filename)
+            window.img = load(filename)
 
-            tk_img = ImageTk.PhotoImage(image=Image.fromarray(self.img))
-            Label(self.frame, image=tk_img).pack()
+            window.tk_img = ImageTk.PhotoImage(image=Image.fromarray(window.img))
+            
+            Label(window.frame, image=window.tk_img).pack()
 
 
     # Load a RAW Image
-    def load_raw_image(self, filename):
-        global tk_img
+    def load_raw_image(self, filename, window):
+        window.img = load(filename, int(self.entry1.get()), int(self.entry2.get()))
 
-        self.frame.pack_forget()
-        self.frame = Frame(self.root)
-        self.frame.pack()
+        window.frame.pack_forget()
+        window.frame = Frame(window.top)
+        window.frame.pack()
 
-        self.img = load(filename, int(self.entry1.get()), int(self.entry2.get()))
-
-        self.root.pack_propagate(1)
-
-        tk_img = ImageTk.PhotoImage(image=Image.fromarray(self.img))
-        Label(self.frame, image=tk_img).pack()
+        window.tk_img = ImageTk.PhotoImage(image=Image.fromarray(window.img))
+        Label(window.frame, image=window.tk_img).pack()
     
 
     # Save Image
     def save_image_window(self):
-        
-        if self.img is None:
-            self.frame.pack_forget()
-            self.frame = Frame(self.root)
-            self.frame.pack()
+        if self.result_img is None:
 
-            Label(self.frame, text="No Image to Save").pack()
+            top = Toplevel()
+            Label(top, text="No photo to save").grid(row=0, column=0, columnspan=3)
+            Button(top, text= "Done", command=top.destroy, padx=20).grid(row=2, column=1)
         else:
             filename = filedialog.asksaveasfilename(initialdir="./photos", title="Save As")
             
-            save(self.img, filename)
+            save(self.result_img, filename)
 
             top = Toplevel()
-            Label(top, text="File saves successfully").grid(row=0, column=0, columnspan=3)
+            Label(top, text="Photo saved successfully").grid(row=0, column=0, columnspan=3)
             Button(top, text= "Done", command=top.destroy, padx=20).grid(row=2, column=1)
 
 
     # Create Image with white Circle in the middle
     def create_circle(self):
-        global tk_img
+        self.result_img = np.asarray(bin_circle())
 
-        self.frame.pack_forget()
-        self.frame = Frame(self.root)
-        self.frame.pack()
+        # See if windows were closed and erase from list
+        self.check_windows()
 
-        self.img = np.asarray(bin_circle())
+        window = secondWindow(len(self.windows), self.root)
+        self.windows.append(window)
 
-        self.root.pack_propagate(1)
-
-        tk_img = ImageTk.PhotoImage(image=Image.fromarray(self.img))
-        Label(self.frame, image=tk_img).pack()
+        window.img = self.result_img
+        window.tk_img = ImageTk.PhotoImage(image=Image.fromarray(window.img))
+        Label(window.frame, image=window.tk_img).pack()
 
     
      # Create Image with white Square in the middle
-    def create_square(self):
-        global tk_img
+    def create_square(self): 
+        self.result_img = np.asarray(bin_rectangle())
+   
+        # See if windows were closed and erase from list
+        self.check_windows()
 
-        self.frame.pack_forget()
-        self.frame = Frame(self.root)
-        self.frame.pack()
+        window = secondWindow(len(self.windows), self.root)
+        self.windows.append(window)
 
-        self.img = np.asarray(bin_rectangle())
-        
-        self.root.pack_propagate(1)
-
-        tk_img = ImageTk.PhotoImage(image=Image.fromarray(self.img))
-        Label(self.frame, image=tk_img).pack()
+        window.img = self.result_img
+        window.tk_img = ImageTk.PhotoImage(image=Image.fromarray(window.img))
+        Label(window.frame, image=window.tk_img).pack()
         
 
     # Get pixel value
-    def get_pixel_value(self):
-        
-        if self.img is None:
-            self.frame.pack_forget()
-            self.frame = Frame(self.root)
-            self.frame.pack()
+    def get_pixel_value(self):  
+        if len(self.windows) == 0:
 
-            Label(self.frame, text="No Image, please load one").pack()
+            top = Toplevel()
+            Label(top, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(top, text= "Done", command=top.destroy, padx=20).grid(row=2, column=1)
         else:
             top = Toplevel()
             frame2 = Frame(top)
             frame2.pack()
-            Label(frame2, text = "Enter (x,y) coordinates of pixel").grid(row=0,column=0,columnspan=3)
 
-            Label(frame2, text="Enter x:").grid(row=1, column=0)   
-            self.entry1 = Entry(frame2, width=10)
-            self.entry1.grid(row=2, column=0)
+            if len(self.windows) > 1:
+                Label(frame2, text = "Select image").grid(row=0,column=0,columnspan=3)
+                
+                self.check_windows()
 
-            Label(frame2, text="Enter y:").grid(row=1, column=1)   
-            self.entry2 = Entry(frame2, width=10)
-            self.entry2.grid(row=2, column=1)
+                clicked = StringVar()
+                options = self.get_windows_titles()
 
-            button = Button(frame2, text="Enter", command= (lambda : self.show_pixel_value(top, frame2)), padx=20)
-            button.grid(row=2, column=2)
+                clicked.set(options[0])
 
+                op_menu = OptionMenu(frame2, clicked, *options)
+                op_menu.grid(row=1, column=0, columnspan=2)
+
+                button = Button(frame2, text="Select", command=lambda: self.get_pixel_coordinates(frame2, top, clicked.get()))
+                button.grid(row=1, column=2)
+            else:
+                self.get_pixel_coordinates(frame2, top, self.windows[0].title)
+
+
+    def get_pixel_coordinates(self, frame2, top, clicked):
+        frame2.pack_forget()
+        frame2 = Frame(top)
+        frame2.pack()    
+
+        Label(frame2, text = "Enter (x,y) coordinates of pixel").grid(row=0,column=0,columnspan=3)
+
+        Label(frame2, text="Enter x:").grid(row=1, column=0)   
+        self.entry1 = Entry(frame2, width=10)
+        self.entry1.grid(row=2, column=0)
+
+        Label(frame2, text="Enter y:").grid(row=1, column=1)   
+        self.entry2 = Entry(frame2, width=10)
+        self.entry2.grid(row=2, column=1)
+
+        window = self.get_clicked_window(clicked)
+
+        button = Button(frame2, text="Enter", command= (lambda : self.show_pixel_value(top, frame2, window)), padx=20)
+        button.grid(row=2, column=2)
+    
             
-    def show_pixel_value(self, top, frame):
+    def show_pixel_value(self, top, frame, window):
         x = int(self.entry1.get())
         y = int(self.entry2.get())
 
@@ -218,7 +213,7 @@ class mainWindow:
         frame = Frame(top)
         frame.pack()
 
-        value = get_pixel(self.img, x, y)
+        value = get_pixel(window.img, x, y)
 
         Label(frame, text="Pixel's value on (" + str(x) + ", " + str(y) + "): " + str(value)).grid(row=0, column=0, columnspan=3)
         Button(frame, text= "Done", command=top.destroy, padx=20).grid(row=2, column=1)
@@ -227,96 +222,128 @@ class mainWindow:
     # Modify pixel
     def modify_pixel(self):
     
-        if self.img is None:
-            self.frame.pack_forget()
-            self.frame = Frame(self.root)
-            self.frame.pack()
+        if len(self.windows) == 0:
 
-            Label(self.frame, text="No Image, please load one").pack()
+            top = Toplevel()
+            Label(top, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(top, text= "Done", command=top.destroy, padx=20).grid(row=2, column=1)
         else:
             top = Toplevel()
             frame2 = Frame(top)
             frame2.pack()
-            Label(frame2, text = "Enter (x,y) coordinates of pixel").grid(row=0,column=0,columnspan=3)
 
-            Label(frame2, text="Enter x:").grid(row=1, column=0)   
-            self.entry1 = Entry(frame2, width=10)
-            self.entry1.grid(row=2, column=0)
+            if len(self.windows) > 1:
+                Label(frame2, text = "Select image").grid(row=0,column=0,columnspan=3)
+                
+                self.check_windows()
 
-            Label(frame2, text="Enter y:").grid(row=1, column=1)   
-            self.entry2 = Entry(frame2, width=10)
-            self.entry2.grid(row=2, column=1)
+                clicked = StringVar()
+                options = self.get_windows_titles()
 
-            Label(frame2, text="Enter new value:").grid(row=3, column=0, columnspan=2)   
-            self.entry3 = Entry(frame2, width=20)
-            self.entry3.grid(row=4, column=0, columnspan=2)
+                clicked.set(options[0])
 
-            button = Button(frame2, text="Enter", command= (lambda : self.show_modified_pixel(top, frame2)), padx=20)
-            button.grid(row=4, column=2)
+                op_menu = OptionMenu(frame2, clicked, *options)
+                op_menu.grid(row=1, column=0, columnspan=2)
+
+                button = Button(frame2, text="Select", command=lambda: self.get_coordinates_modify(frame2, top, clicked.get()))
+                button.grid(row=1, column=2)
+            else:
+                self.get_coordinates_modify(frame2, top, self.windows[0].title)
+
+
+    def get_coordinates_modify(self, frame2, top, clicked):
+        frame2.pack_forget()
+        frame2 = Frame(top)
+        frame2.pack()
+
+        Label(frame2, text = "Enter (x,y) coordinates of pixel").grid(row=0,column=0,columnspan=3)
+
+        Label(frame2, text="Enter x:").grid(row=1, column=0)   
+        self.entry1 = Entry(frame2, width=10)
+        self.entry1.grid(row=2, column=0)
+
+        Label(frame2, text="Enter y:").grid(row=1, column=1)   
+        self.entry2 = Entry(frame2, width=10)
+        self.entry2.grid(row=2, column=1)
+
+        Label(frame2, text="Enter new value:").grid(row=3, column=0, columnspan=2)   
+        self.entry3 = Entry(frame2, width=20)
+        self.entry3.grid(row=4, column=0, columnspan=2)
+
+        window = self.get_clicked_window(clicked)
+
+        button = Button(frame2, text="Enter", command= (lambda : self.show_modified_pixel(top, frame2, window)), padx=20)
+        button.grid(row=4, column=2)
     
 
-    def show_modified_pixel(self, top, frame):
-            
+    def show_modified_pixel(self, top, frame, window):
         x = int(self.entry1.get())
         y = int(self.entry2.get())
         new_value = int(self.entry3.get())
 
         frame.pack_forget()
         frame = Frame(top)
-        frame.pack()
+        frame.pack()        
 
-        put_pixel(self.img, x, y, new_value)
+        self.check_windows()
+
+        new_window = secondWindow(len(self.windows), self.root)
+        self.windows.append(new_window)
+
+        new_window.copy_img(window.img)
+
+        put_pixel(new_window.img, x, y, new_value)
 
         Label(frame, text="Pixel's value on (" + str(x) + ", " + str(y) + "): " + str(new_value)).grid(row=0, column=0, columnspan=3)
-        Button(frame, text= "Done", command=top.destroy, padx=20).grid(row=2, column=1)
+        Button(frame, text= "Done", command=lambda: self.show_new_pixel(top, new_window), padx=20).grid(row=2, column=1)
 
+
+    def show_new_pixel(self, top, window):
+        top.destroy()
         
+        window.tk_img = ImageTk.PhotoImage(image=Image.fromarray(window.img))
+        Label(window.frame, image=window.tk_img).pack()
+        
+
     def copy_img_into_other(self):
-        if self.img is None:
-            self.frame.pack_forget()
-            self.frame = Frame(self.root)
-            self.frame.pack()
-
-            Label(self.frame, text="No Image, please load one").pack()
+        if len(self.windows) < 1:
+            top = Toplevel()
+            Label(top, text="Not enough images, please load at least one image").grid(row=0, column=0, columnspan=3)
+            Button(top, text= "Done", command=top.destroy, padx=20).grid(row=2, column=1)
         else:
-            self.img_old = self.img
+            top = Toplevel()
+            frame2 = Frame(top)
+            frame2.pack()
 
-            global tk_img
-
-        self.frame.pack_forget()
-        self.frame = Frame(self.root)
-        self.frame.pack()
-
-        self.root.pack_propagate(1)
-
-        filename = filedialog.askopenfilename(initialdir="./photos", title="Select an Image" , filetypes=(("raw", "*.RAW"), ("pgm", "*.pgm"), ("ppm", "*.ppm"), ("jpg", "*.jpg"), ("png", "*.png")))
-        
-        if filename.lower().endswith('.raw'):
-
-            Label(self.frame, text="Enter image width:").grid(row=0, column=0)   
-            self.entry1 = Entry(self.frame, width=10)
-            self.entry1.grid(row=1, column=0)
-
-            Label(self.frame, text="Enter image height:").grid(row=0, column=1)   
-            self.entry2 = Entry(self.frame, width=10)
-            self.entry2.grid(row=1, column=1)
-
-            button = Button(self.frame, text="Enter", command= (lambda : self.exchange_image(self.load_raw_image(filename))), padx=20)
-            button.grid(row=1, column=2)
+            Label(frame2, text = "Select images").grid(row=0,column=0,columnspan=3)
             
-        else:
-            self.img = load(filename)
-            self.exchange_image(self.img)
+            self.check_windows()
 
-    def exchange_image(self, img=None):
-        global tk_img
-        tk_img = ImageTk.PhotoImage(image=Image.fromarray(self.img))
-        Label(self.frame, image=tk_img).pack()
+            clicked1 = StringVar()
+            clicked2 = StringVar()
+            options = self.get_windows_titles()
 
-        top = Toplevel()
+            clicked1.set(options[0])
+            clicked2.set(options[0])
+
+            Label(frame2, text = "Select image from").grid(row=1,column=0,columnspan=2)
+            op_menu1 = OptionMenu(frame2, clicked1, *options)
+            op_menu1.grid(row=2, column=0, columnspan=2)
+
+            Label(frame2, text = "Select image to").grid(row=3,column=0,columnspan=2)
+            op_menu2 = OptionMenu(frame2, clicked2, *options)
+            op_menu2.grid(row=4, column=0, columnspan=2)
+
+            button = Button(frame2, text="Select", command=lambda: self.exchange_image(top, frame2, [clicked1.get(), clicked2.get()]))
+            button.grid(row=4, column=2)
+            
+      
+    def exchange_image(self, top, frame2, windows):
+        frame2.pack_forget()
         frame2 = Frame(top)
         frame2.pack()
-        Label(frame2, text = "Enter (x1,y1) and (x2, y2) coordinates of pixel").grid(row=0,column=0,columnspan=3)
+
+        Label(frame2, text = "Enter (x1,y1) and (x2, y2) coordinates of pixel of from image").grid(row=0,column=0,columnspan=3)
 
         Label(frame2, text="Enter x1:").grid(row=1, column=0)   
         self.entry1 = Entry(frame2, width=10)
@@ -334,45 +361,105 @@ class mainWindow:
         self.entry4 = Entry(frame2, width=10)
         self.entry4.grid(row=3, column=1)
 
-        button = Button(frame2, text="Enter", command= (lambda : self.change_image(top, frame2)), padx=20)
-        button.grid(row=3, column=2)
+        Label(frame2, text = "Enter (x,y) coordinates of left corner pixel of to image").grid(row=4,column=0,columnspan=3)
 
-    def change_image(self, top, frame):
-        top.destroy()
+        Label(frame2, text="Enter x:").grid(row=1, column=0)   
+        self.entry5 = Entry(frame2, width=10)
+        self.entry5.grid(row=5, column=0)
 
+        Label(frame2, text="Enter y:").grid(row=1, column=1)   
+        self.entry6 = Entry(frame2, width=10)
+        self.entry6.grid(row=5, column=1)
+
+        button = Button(frame2, text="Enter", command= (lambda : self.change_image(top, windows)), padx=20)
+        button.grid(row=5, column=2)
+
+
+    def change_image(self, top, windows):
         x1 = int(self.entry1.get())
         y1 = int(self.entry2.get())
         x2 = int(self.entry3.get())
         y2 = int(self.entry4.get())
+        x = int(self.entry5.get())
+        y = int(self.entry6.get())
 
-        self.img = paste_section(self.img_old, x1, y1, x2, y2, self.img, x1, y1)
+        self.check_windows()
+        new_window = secondWindow(len(self.windows), self.root)
+        self.windows.append(new_window)
 
-        self.frame.pack_forget()
-        self.frame = Frame(self.root)
-        self.frame.pack()
+        from_window = self.get_clicked_window(windows[0])
+        to_window = self.get_clicked_window(windows[1])
 
-        self.root.pack_propagate(1)
+        new_window.img = paste_section(from_window.img, x1, y1, x2, y2, to_window.img, x, y)
 
-        tk_img = ImageTk.PhotoImage(image=Image.fromarray(self.img))
-        Label(self.frame, image=tk_img).pack()
+        top.destroy()
+
+        new_window.tk_img = ImageTk.PhotoImage(image=Image.fromarray(new_window.img))
+        Label(new_window.top, image=new_window.tk_img).pack()
 
 
     def show_hist(self):
-        if self.img is None:
-            self.frame.pack_forget()
-            self.frame = Frame(self.root)
-            self.frame.pack()
-
-            Label(self.frame, text="No Image to Save").pack()
+        if len(self.windows) == 0:
+            top = Toplevel()
+            Label(top, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(top, text= "Done", command=top.destroy, padx=20).grid(row=2, column=1)
         else:
-            plot_hist(self.img)
+            top = Toplevel()
+            frame2 = Frame(top)
+            frame2.pack()
+
+            if len(self.windows) > 1:
+                Label(frame2, text = "Select image").grid(row=0,column=0,columnspan=3)
+                
+                self.check_windows()
+
+                clicked = StringVar()
+                options = self.get_windows_titles()
+
+                clicked.set(options[0])
+
+                op_menu = OptionMenu(frame2, clicked, *options)
+                op_menu.grid(row=1, column=0, columnspan=2)
+
+                button = Button(frame2, text="Select", command=lambda: self.show_plot_hist(top, clicked.get()))
+                button.grid(row=1, column=2)
+            else:
+                self.show_plot_hist(top, self.windows[0].title)
+
+
+    def show_plot_hist(self, top, clicked):
+        top.destroy()
+        window = self.get_clicked_window(clicked)
+
+        plot_hist(window.img)
 
         
-
     def ask_quit(self):
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
             self.root.destroy()
         
+    
+    def check_windows(self):
+        for window in self.windows:
+            if not Toplevel.winfo_exists(window.top):
+                self.windows.remove(window)
+
+        for i in range(0, len(self.windows)):
+            window = self.windows[i]
+            window.modify_id(i)
+
+
+    def get_windows_titles(self):
+        titles = []
+        for window in self.windows:
+            titles.append(window.title)
+        return titles
+    
+
+    def get_clicked_window(self, clicked):
+        for window in self.windows:
+            if window.title == clicked:
+                return window
         
 
 if __name__ == '__main__':
