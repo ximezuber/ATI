@@ -19,7 +19,7 @@ class ImageWindow(Toplevel):
                         ('Subtract', self.subtract_other_image),
                         ('Multiply', self.multiply_other_image),
                         ('Show RGB bands', self.show_rgb),
-                        ('Show RGB histogram', self.show_hist),
+                        ('Show RGB histogram', self.show_hist_rgb),
                         ('Show HSV bands', self.show_hsv)
                         ]
         self.main_window = main_window
@@ -92,26 +92,59 @@ class ImageWindow(Toplevel):
         button.grid(row=2, column=2)
 
     def modify_pixel(self):
-        top = Toplevel()
-        frame = Frame(top)
-        frame.pack()
-        Label(frame, text="Enter (x,y) coordinates of pixel").grid(row=0, column=0, columnspan=3)
+        if len(self.img.shape) == 2:
+            top = Toplevel()
+            frame = Frame(top)
+            frame.pack()
+            Label(frame, text="Enter (x,y) coordinates of pixel").grid(row=0, column=0, columnspan=3)
 
-        Label(frame, text="Enter x:").grid(row=1, column=0)
-        x_entry = Entry(frame, width=10)
-        x_entry.grid(row=2, column=0)
+            Label(frame, text="Enter x:").grid(row=1, column=0)
+            x_entry = Entry(frame, width=10)
+            x_entry.grid(row=2, column=0)
 
-        Label(frame, text="Enter y:").grid(row=1, column=1)
-        y_entry = Entry(frame, width=10)
-        y_entry.grid(row=2, column=1)
+            Label(frame, text="Enter y:").grid(row=1, column=1)
+            y_entry = Entry(frame, width=10)
+            y_entry.grid(row=2, column=1)
 
-        Label(frame, text="Enter new value:").grid(row=3, column=0, columnspan=2)
-        new_entry = Entry(frame, width=20)
-        new_entry.grid(row=4, column=0, columnspan=2)
+            Label(frame, text="Enter new value:").grid(row=3, column=0, columnspan=2)
+            new_entry = Entry(frame, width=20)
+            new_entry.grid(row=4, column=0, columnspan=2)
 
-        button = Button(frame, text="Enter",
-                        command=(lambda: self._show_modified_pixel(top, frame, x_entry, y_entry, new_entry)), padx=20)
-        button.grid(row=4, column=2)
+            button = Button(frame, text="Enter",
+                            command=(lambda: self._show_modified_pixel(top, frame, x_entry, y_entry, int(new_entry.get()))), padx=20)
+            button.grid(row=4, column=2)
+        else:
+            top = Toplevel()
+            frame = Frame(top)
+            frame.pack()
+            Label(frame, text="Enter (x,y) coordinates of pixel").grid(row=0, column=0, columnspan=3)
+
+            Label(frame, text="Enter x:").grid(row=1, column=0)
+            x_entry = Entry(frame, width=10)
+            x_entry.grid(row=2, column=0)
+
+            Label(frame, text="Enter y:").grid(row=1, column=1)
+            y_entry = Entry(frame, width=10)
+            y_entry.grid(row=2, column=1)
+
+            Label(frame, text="Enter new value:").grid(row=3, column=0, columnspan=2)
+
+            Label(frame, text="Enter R:").grid(row=4, column=0)
+            r_entry = Entry(frame, width=10)
+            r_entry.grid(row=5, column=0)
+
+            Label(frame, text="Enter G:").grid(row=4, column=1)
+            g_entry = Entry(frame, width=10)
+            g_entry.grid(row=5, column=1)
+
+            Label(frame, text="Enter B:").grid(row=4, column=2)
+            b_entry = Entry(frame, width=10)
+            b_entry.grid(row=5, column=2)
+
+            button = Button(frame, text="Enter",
+                            command=(lambda: self._show_modified_pixel(top, frame, x_entry, y_entry, (int(r_entry.get()), int(g_entry.get()), int(b_entry.get())))),
+                            padx=20)
+            button.grid(row=6, columnspan=3)
 
     def copy_img_into_other(self):
         self._load_image_and_apply(self._select_copy_params)
@@ -144,8 +177,8 @@ class ImageWindow(Toplevel):
         v_img_window = ImageWindow(self.main_window)
         v_img_window.add_image_from_array(v, self.title() + '_V')
 
-    def show_hist(self):
-        plot_hist(self.img)
+    def show_hist_rgb(self):
+        plot_hist_rgb(self.img)
 
     def _sum_with_other(self, img):
         new_img = add(self.img, img)
@@ -177,10 +210,9 @@ class ImageWindow(Toplevel):
         Button(frame, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
 
     # TODO: check RGB format
-    def _show_modified_pixel(self, top, frame, x_entry, y_entry, new_value_entry):
+    def _show_modified_pixel(self, top, frame, x_entry, y_entry, new_value):
         x = int(x_entry.get())
         y = int(y_entry.get())
-        new_value = int(new_value_entry.get())
 
         frame.pack_forget()
         frame = Frame(top)

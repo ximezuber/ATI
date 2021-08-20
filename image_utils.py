@@ -112,7 +112,7 @@ def pixels_info(pixels):
     return count, mean
 
 
-def plot_hist(image):
+def plot_hist_rgb(image):
     image = np.array(image).astype(float)
     if len(image.shape) > 2:
         color = ("red", "green", "blue")
@@ -124,7 +124,7 @@ def plot_hist(image):
             channel = image[:, :, i]
             plt.hist(
                 channel.ravel(),
-                bins= 256,
+                bins=256,
                 weights=np.zeros_like(channel).ravel() + 1.0 / channel.size,
                 color=color[i],
             )

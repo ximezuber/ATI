@@ -24,10 +24,7 @@ class MainWindow:
                               None,
                               ('Exit', self.ask_quit)]
 
-        advanced_menu_options = [('Pixel Region Info', None)]
-
-        menu_options = {'Image': image_menu_options,
-                        'Advanced': advanced_menu_options}
+        menu_options = {'Image': image_menu_options}
 
         for option in menu_options.keys():
             self._add_to_menu(option, menu_options[option])
