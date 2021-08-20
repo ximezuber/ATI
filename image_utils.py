@@ -61,13 +61,13 @@ def bin_rectangle(hor_len=150, ver_len=150, img_height=200, img_width=200):
 
 
 def add(im1, im2):
-    ans = np.add(im1, im2)
+    ans = np.add(im1.astype(np.uint32), im2.astype(np.uint32))
     ans = normalize(ans, 0, 255+255)
     return ans
 
 
 def subtract(im1, im2):
-    ans = np.subtract(im1, im2)
+    ans = np.subtract(im1.astype(np.uint32), im2.astype(np.uint32))
     ans = normalize(ans, -255, 255)
     return ans
 
