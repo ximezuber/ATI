@@ -17,7 +17,11 @@ class ImageWindow(Toplevel):
                         ('Copy into other', self.copy_img_into_other),
                         ('Sum', self.sum_other_image),
                         ('Subtract', self.subtract_other_image),
-                        ('Multiply', self.multiply_other_image)]
+                        ('Multiply', self.multiply_other_image),
+                        ('Show RGB bands', self.show_rgb),
+                        ('Show RGB histogram', self.show_hist),
+                        ('Show HSV bands', self.show_hsv)
+                        ]
         self.main_window = main_window
 
     def update_image(self):
@@ -120,6 +124,28 @@ class ImageWindow(Toplevel):
 
     def multiply_other_image(self):
         self._load_image_and_apply(self._multiply_with_other)
+
+    def show_rgb(self):
+        r, g, b = split_rgb(self.img)
+        r_img_window = ImageWindow(self.main_window)
+        r_img_window.add_image_from_array(r, self.title() + '_R')
+        b_img_window = ImageWindow(self.main_window)
+        b_img_window.add_image_from_array(b, self.title() + '_B')
+        g_img_window = ImageWindow(self.main_window)
+        g_img_window.add_image_from_array(g, self.title() + '_G')
+
+    def show_hsv(self):
+        hsv_image = rgb_to_hsv(self.img)
+        h, s, v = split_hsv(hsv_image)
+        h_img_window = ImageWindow(self.main_window)
+        h_img_window.add_image_from_array(h, self.title() + '_H')
+        s_img_window = ImageWindow(self.main_window)
+        s_img_window.add_image_from_array(s, self.title() + '_S')
+        v_img_window = ImageWindow(self.main_window)
+        v_img_window.add_image_from_array(v, self.title() + '_V')
+
+    def show_hist(self):
+        plot_hist(self.img)
 
     def _sum_with_other(self, img):
         new_img = add(self.img, img)

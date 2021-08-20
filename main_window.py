@@ -24,17 +24,9 @@ class MainWindow:
                               None,
                               ('Exit', self.ask_quit)]
 
-        edit_menu_options = [('Copy into Other', None),
-                             None,
-                             ('Add', None),
-                             ('Subtract', None),
-                             ('Product', None)]
-
-        advanced_menu_options = [('Turn to HSV', self.show_hist),
-                                 ('Pixel Region Info', None)]
+        advanced_menu_options = [('Pixel Region Info', None)]
 
         menu_options = {'Image': image_menu_options,
-                        'Edit': edit_menu_options,
                         'Advanced': advanced_menu_options}
 
         for option in menu_options.keys():
@@ -109,16 +101,6 @@ class MainWindow:
         new_window = ImageWindow(self)
         img = np.asarray(bin_rectangle())
         new_window.add_image_from_array(img, 'square')
-
-    def show_hist(self):
-        if self.img is None:
-            self.frame.pack_forget()
-            self.frame = Frame(self.root)
-            self.frame.pack()
-
-            Label(self.frame, text="No Image to Save").pack()
-        else:
-            plot_hist(self.img)
 
     def ask_quit(self):
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
