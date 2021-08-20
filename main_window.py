@@ -1,6 +1,5 @@
 from tkinter import *
 from image_utils import *
-from PIL import Image, ImageTk
 from tkinter import filedialog, messagebox
 from image_window import ImageWindow
 

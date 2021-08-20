@@ -16,7 +16,6 @@ class ImageWindow(Toplevel):
         self.buttons = [('Save', self.save_image),
                         ('Get pixel', self.get_pixel_value),
                         ('Modify pixel', self.modify_pixel),
-                        ('Copy into other', self.copy_img_into_other),
                         ('Sum', self.sum_other_image),
                         ('Subtract', self.subtract_other_image),
                         ('Multiply', self.multiply_other_image),
@@ -26,6 +25,8 @@ class ImageWindow(Toplevel):
                         ('Select', self.select)
                         ]
         self.in_select_buttons = [('Get info', self.get_info),
+                                  ('Copy into other', self.copy_img_into_other),
+                                  ('Crop', self.crop),
                                   ('Done', self.back_to_normal)]
         self.main_window = main_window
         self.image_frame = Frame(self)
@@ -221,13 +222,7 @@ class ImageWindow(Toplevel):
             new_button.grid(row=(i // max_buttons_per_row), column=i % max_buttons_per_row)
 
     def get_info(self):
-        start, end = self.selector.position_tracker.selection()
-        print(start, end)
-        x_start = min(start[0], end[0])
-        y_start = min(start[1], end[1])
-        x_end = max(start[0], end[0])
-        y_end = max(start[1], end[1])
-        image = self.img[y_start:y_end, x_start:x_end]
+        image = self._get_selection()
 
         new_window = Toplevel()
         frame = Frame(new_window)
@@ -235,6 +230,19 @@ class ImageWindow(Toplevel):
         pixels, mean = pixels_info(image)
         Label(frame, text=f"Pixels: {pixels}, Mean: {mean}").grid(row=0, column=0, columnspan=3)
         Button(frame, text="Done", command=new_window.destroy, padx=20).grid(row=2, column=1)
+
+    def crop(self):
+        new_window = ImageWindow(self.main_window)
+        new_window.add_image_from_array(self._get_selection(), self.title())
+
+    def _get_selection(self):
+        start, end = self.selector.position_tracker.selection()
+        x_start = min(start[0], end[0])
+        y_start = min(start[1], end[1])
+        x_end = max(start[0], end[0])
+        y_end = max(start[1], end[1])
+        image = self.img[y_start:y_end, x_start:x_end]
+        return image
 
     def _sum_with_other(self, img):
         new_img = add(self.img, img)
@@ -286,42 +294,28 @@ class ImageWindow(Toplevel):
         new_window = Toplevel()
         frame = Frame(new_window)
         frame.pack()
-        Label(frame, text="Enter (x1,y1) and (x2, y2) coordinates of pixel").grid(row=0, column=0, columnspan=3)
+        Label(frame, text="Enter upper left position to start copying").grid(row=0, column=0, columnspan=2)
 
-        Label(frame, text="Enter x1:").grid(row=1, column=0)
-        x1 = Entry(frame, width=10)
-        x1.grid(row=2, column=0)
-
-        Label(frame, text="Enter y1:").grid(row=1, column=1)
-        y1 = Entry(frame, width=10)
-        y1.grid(row=2, column=1)
-
-        Label(frame, text="Enter x2:").grid(row=3, column=0)
-        x2 = Entry(frame, width=10)
-        x2.grid(row=4, column=0)
-
-        Label(frame, text="Enter y2:").grid(row=3, column=1)
-        y2 = Entry(frame, width=10)
-        y2.grid(row=4, column=1)
-
-        Label(frame, text="Enter upper left position to start copying").grid(row=5, column=0, columnspan=2)
-
-        Label(frame, text="Enter x:").grid(row=6, column=0)
+        Label(frame, text="Enter x:").grid(row=1, column=0)
         ulx = Entry(frame, width=10)
-        ulx.grid(row=7, column=0)
+        ulx.grid(row=2, column=0)
 
-        Label(frame, text="Enter y:").grid(row=6, column=1)
+        Label(frame, text="Enter y:").grid(row=1, column=1)
         uly = Entry(frame, width=10)
-        uly.grid(row=7, column=1)
+        uly.grid(row=2, column=1)
 
-        button = Button(frame, text="Enter", command=(lambda: self._make_copy(
-            int(x1.get()), int(y1.get()), int(x2.get()), int(y2.get()), int(ulx.get()), int(uly.get()), img,
+        button = Button(frame, text="Enter", command=(lambda: self._make_copy(int(ulx.get()), int(uly.get()), img,
             new_window)), padx=20)
         button.grid(row=8, columnspan=2)
 
-    def _make_copy(self, x1, y1, x2, y2, ulx, uly, img, new_window):
+    def _make_copy(self, ulx, uly, img, new_window):
         new_window.destroy()
-        new_img = paste_section(self.img, x1, y1, x2, y2, img, ulx, uly)
+        start, end = self.selector.position_tracker.selection()
+        x_start = min(start[0], end[0])
+        y_start = min(start[1], end[1])
+        x_end = max(start[0], end[0])
+        y_end = max(start[1], end[1])
+        new_img = paste_section(self.img, x_start, y_start, x_end, y_end, img, ulx, uly)
         new_img_window = ImageWindow(self.main_window)
         new_img_window.add_image_from_array(new_img, self.title())
 
