@@ -42,9 +42,10 @@ class ImageWindow(Toplevel):
         label = Label(self, image=self.tk_img)
         label.grid(row=0, column=0, columnspan=len(self.buttons))
 
+        max_buttons_per_row = 5
         for i, button in enumerate(self.buttons):
             new_button = Button(self, text=button[0], command=button[1])
-            new_button.grid(row=1, column=i)
+            new_button.grid(row=(i//max_buttons_per_row)+1, column=i % max_buttons_per_row)
 
         starting_title = filename
         title = starting_title
