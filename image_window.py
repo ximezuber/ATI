@@ -273,7 +273,6 @@ class ImageWindow(Toplevel):
                                                                                                    columnspan=3)
         Button(frame, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
 
-    # TODO: check RGB format
     def _show_modified_pixel(self, top, frame, x_entry, y_entry, new_value):
         x = int(x_entry.get())
         y = int(y_entry.get())
