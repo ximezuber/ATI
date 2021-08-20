@@ -1,8 +1,8 @@
 from PIL import Image, ImageDraw
 import numpy as np
-import imageio
 
 import matplotlib.pyplot as plt
+
 
 def load(filename, w=None, h=None):
     if filename.lower().endswith('.raw'):
@@ -110,6 +110,7 @@ def pixels_info(pixels):
     count = w*h
     mean = np.mean(pixels, axis=(0, 1))
     return count, mean
+
 
 def plot_hist(image):
     image = np.array(image).astype(float)
