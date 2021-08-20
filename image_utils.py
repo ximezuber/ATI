@@ -67,7 +67,7 @@ def add(im1, im2):
 
 
 def subtract(im1, im2):
-    ans = np.subtract(im1.astype(np.uint32), im2.astype(np.uint32))
+    ans = np.subtract(im1.astype(np.int32), im2.astype(np.int32))
     ans = normalize(ans, -255, 255)
     return ans
 
