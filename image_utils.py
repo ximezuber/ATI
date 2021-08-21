@@ -111,6 +111,7 @@ def pixels_info(pixels):
     mean = np.mean(pixels, axis=(0, 1))
     return count, mean
 
+
 def plot_hist(image):
     image = np.array(image).astype(float)
     if len(image.shape) > 2:
