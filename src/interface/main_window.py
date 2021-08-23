@@ -183,7 +183,10 @@ class MainWindow:
             Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
         else:
             img = self.select_img_from_windows()
-            plot_hist(img)
+            plot_hist_rgb(img)
+            converted = rgb_to_hsv(img)
+            plot_hist_hsv(converted)
+            
 
     # Selection mode
     def select(self):

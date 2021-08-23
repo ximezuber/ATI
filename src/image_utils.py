@@ -111,7 +111,7 @@ def pixels_info(pixels):
     return count, mean
 
 
-def plot_hist(image):
+def plot_hist_rgb(image):
     image = np.array(image).astype(float)
     if len(image.shape) > 2:
         color = ("red", "green", "blue")
@@ -132,6 +132,50 @@ def plot_hist(image):
             plt.title("Histogram for " + legends[i])
 
             plt.figure(1)
+            plt.hist(
+                channel.ravel(),
+                bins=256,
+                weights=np.zeros_like(channel).ravel() + 1.0 / channel.size,
+                color=color[i],
+                alpha=0.35,
+            )
+
+        plt.xlabel("Intensity Value")
+        plt.legend(legends)
+        # plt.show()
+    else:
+        plt.figure()
+        plt.hist(
+            image.ravel(),
+            bins=256,
+            weights=np.zeros_like(image).ravel() + 1.0 / image.size,
+        )
+        plt.xlabel("Intensity Value")
+        plt.legend("Gray scale")
+        # plt.show()
+
+
+def plot_hist_hsv(image):
+    image = np.array(image).astype(float)
+    if len(image.shape) > 2:
+        color = ("red", "green", "blue")
+        legends = ["Hue Channel", "Saturation Channel", "Value Channel", "Total"]
+        plt.figure(5)
+
+        for i in range(image.shape[2]):
+            plt.figure(6 + i)
+            channel = image[:, :, i]
+            plt.hist(
+                channel.ravel(),
+                bins= 256,
+                weights=np.zeros_like(channel).ravel() + 1.0 / channel.size,
+                color=color[i],
+            )
+            plt.xlabel("Intensity Value")
+            plt.legend([legends[i]])
+            plt.title("Histogram for " + legends[i])
+
+            plt.figure(5)
             plt.hist(
                 channel.ravel(),
                 bins=256,
