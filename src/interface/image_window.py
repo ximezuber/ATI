@@ -1,10 +1,11 @@
+from src.image_utils import paste_section, pixels_info
 from tkinter import *
 
 from PIL import ImageTk
 from numpy import copy
 
-from image_utils import *
-from mouse_selector import Application
+# from image_utils import *
+from src.interface.mouse_selector import Application
 
 
 class ImageWindow:

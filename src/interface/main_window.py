@@ -1,6 +1,6 @@
-from image_window import ImageWindow
+from src.interface.image_window import ImageWindow
 from tkinter import *
-from image_utils import *
+from src.image_utils import *
 from numpy import copy
 from tkinter import filedialog, messagebox
 
@@ -300,5 +300,4 @@ class MainWindow:
         return w, h
 
 
-if __name__ == '__main__':
-    MainWindow()
+
