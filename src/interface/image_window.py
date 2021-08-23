@@ -1,7 +1,7 @@
 from src.image_utils import paste_section, pixels_info
 from tkinter import *
 
-from PIL import ImageTk
+from PIL import ImageTk, Image
 from numpy import copy
 
 # from image_utils import *

@@ -28,9 +28,9 @@ class MainWindow:
                              ('Get Pixel', self.get_pixel_value),
                              ('Modify Pixel', self.modify_pixel),
                              None,
-                             ('Add', None),  # TODO
-                             ('Subtract', None),  # TODO
-                             ('Multiply', None)]  # TODO
+                             ('Add', self.sum_images, None),  
+                             ('Subtract', self.subtract_images, None),  
+                             ('Multiply', self.multiply_images, None)]  
         advanced_menu_options = [('Turn to HSV', self.show_hist)]
 
         menu_options = {'Image': image_menu_options,
@@ -136,6 +136,40 @@ class MainWindow:
                 .grid(row=0, column=0, columnspan=3)
             Button(frame, text="Done", command=info_window.destroy, padx=20).grid(row=2, column=1)
 
+    
+    def sum_images(self): 
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else: 
+            windows = self.select_from_to_windows()
+            new_img = add(windows[0].img, windows[1].img)
+            ImageWindow(self, new_img)
+    
+
+    def subtract_images(self): 
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else: 
+            windows = self.select_from_to_windows()
+            new_img = subtract(windows[0].img, windows[1].img)
+            ImageWindow(self, new_img)
+
+
+    def multiply_images(self): 
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else: 
+            windows = self.select_from_to_windows()
+            new_img = multiply(windows[0].img, windows[1].img)
+            ImageWindow(self, new_img)
+            
+            
     # Exit
     def ask_quit(self):
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
@@ -199,6 +233,62 @@ class MainWindow:
         for image_window in self.windows:
             if image_window.title == window_name:
                 return image_window
+
+    
+    def select_from_to_windows(self):
+        if len(self.windows) == 1:
+            return (self.windows[0], self.windows[0])
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Select image 1").grid(row=0, column=0, columnspan=3)
+
+        clicked_from = StringVar()
+        options = self.get_windows_titles()
+
+        clicked_from.set(options[0])
+
+        op_menu_from = OptionMenu(frame, clicked_from, *options)
+        op_menu_from.grid(row=1, column=0, columnspan=2)
+
+        Label(frame, text="Select image 2").grid(row=2, column=0, columnspan=3)
+
+        clicked_to = StringVar()
+        options = self.get_windows_titles()
+
+        clicked_to.set(options[0])
+
+        op_menu_to = OptionMenu(frame, clicked_to, *options)
+        op_menu_to.grid(row=3, column=0, columnspan=2)
+
+
+        window_name_var_from = StringVar()
+        window_name_var_to = StringVar()
+
+        Button(frame, text="Select", command=(lambda: self.set_vars(window_name_var_from, 
+                                                                    clicked_from.get(), 
+                                                                    window_name_var_to, 
+                                                                    clicked_to.get()))).grid(row=3, column=2)
+
+        frame.wait_variable(window_name_var_to)
+        window_from_name = window_name_var_from.get()
+        window_to_name = window_name_var_to.get()
+        window.destroy()
+
+        window_from = None
+        window_to = None
+        for image_window in self.windows:
+            if image_window.title == window_from_name:
+                window_from = image_window
+            if image_window.title == window_to_name:
+                window_to = image_window
+        return(window_from, window_to)
+
+    
+    def set_vars(self, from_var, from_val, to_var, to_val):
+        from_var.set(from_val)
+        to_var.set(to_val)
+
 
     def get_windows_titles(self):
         titles = []
