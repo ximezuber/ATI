@@ -28,9 +28,11 @@ class MainWindow:
                              ('Get Pixel', self.get_pixel_value),
                              ('Modify Pixel', self.modify_pixel),
                              None,
-                             ('Add', self.sum_images, None),  
-                             ('Subtract', self.subtract_images, None),  
-                             ('Multiply', self.multiply_images, None)]  
+                             ('Add', self.sum_images),  
+                             ('Subtract', self.subtract_images),  
+                             ('Multiply', self.multiply_images),
+                             None, 
+                             ('Negative', self.image_negative)]  
         advanced_menu_options = [('Turn to HSV', self.show_hist)]
 
         menu_options = {'Image': image_menu_options,
@@ -79,11 +81,13 @@ class MainWindow:
             Label(top, text="No photo to save").grid(row=0, column=0, columnspan=3)
             Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
         else:
-            img = self.select_img_from_windows()
+            (title, img) = self.select_save_window()
             filename = filedialog.asksaveasfilename(initialdir="./photos", title="Save As")
             if not filename:
                 return
             save(img, filename)
+
+            self.result_img.pop(title)
 
             top = Toplevel()
             Label(top, text="Photo saved successfully").grid(row=0, column=0, columnspan=3)
@@ -128,15 +132,16 @@ class MainWindow:
             img = copy(self.select_img_from_windows())
             x, y, new_value = self.ask_xy_new('Enter (x,y) coordinates of pixel')
             put_pixel(img, x, y, new_value)
-            ImageWindow(self, img)
+            window = ImageWindow(self, img)
             info_window = Toplevel()
             frame = Frame(info_window)
             frame.pack()
             Label(frame, text="Pixel's value on (" + str(x) + ", " + str(y) + "): " + str(new_value))\
                 .grid(row=0, column=0, columnspan=3)
             Button(frame, text="Done", command=info_window.destroy, padx=20).grid(row=2, column=1)
+            self.result_img[window.title] = window.img
 
-    
+    # Add two images
     def sum_images(self): 
         if len(self.windows) == 0:
             window = Toplevel()
@@ -147,7 +152,7 @@ class MainWindow:
             new_img = add(windows[0].img, windows[1].img)
             ImageWindow(self, new_img)
     
-
+    # Subtract two images
     def subtract_images(self): 
         if len(self.windows) == 0:
             window = Toplevel()
@@ -158,7 +163,7 @@ class MainWindow:
             new_img = subtract(windows[0].img, windows[1].img)
             ImageWindow(self, new_img)
 
-
+    # Multiply two images
     def multiply_images(self): 
         if len(self.windows) == 0:
             window = Toplevel()
@@ -169,7 +174,19 @@ class MainWindow:
             new_img = multiply(windows[0].img, windows[1].img)
             ImageWindow(self, new_img)
             
-            
+    # Get image's negaive        
+    def image_negative(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            new_img = negative(img)
+            window = ImageWindow(self, new_img)
+            self.result_img[window.title] = window.img
+
+
     # Exit
     def ask_quit(self):
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
@@ -212,6 +229,7 @@ class MainWindow:
         window = self.select_window()
         return window.img
 
+
     def select_window(self):
         if len(self.windows) == 1:
             return self.windows[0]
@@ -236,6 +254,32 @@ class MainWindow:
         for image_window in self.windows:
             if image_window.title == window_name:
                 return image_window
+
+    
+    def select_save_window(self):
+        if len(self.result_img) == 1:
+            return list(self.result_img.items())[0]
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Select image").grid(row=0, column=0, columnspan=3)
+
+        clicked = StringVar()
+        options = list(self.result_img.keys())
+
+        clicked.set(options[0])
+
+        op_menu = OptionMenu(frame, clicked, *options)
+        op_menu.grid(row=1, column=0, columnspan=2)
+
+        window_name_var = StringVar()
+        Button(frame, text="Select", command=(lambda: window_name_var.set(clicked.get()))).grid(row=1, column=2)
+        frame.wait_variable(window_name_var)
+        window_name = window_name_var.get()
+        window.destroy()
+        for image_window in self.result_img.keys():
+            if image_window == window_name:
+                return (image_window, self.result_img.get(image_window))
 
     
     def select_from_to_windows(self):

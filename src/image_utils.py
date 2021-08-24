@@ -197,3 +197,8 @@ def plot_hist_hsv(image):
         plt.xlabel("Intensity Value")
         plt.legend("Gray scale")
         plt.show()
+
+
+def negative(img):
+    neg = lambda x: - x + 255
+    return neg(img)
