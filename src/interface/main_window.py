@@ -32,7 +32,8 @@ class MainWindow:
                              ('Subtract', self.subtract_images),  
                              ('Multiply', self.multiply_images),
                              None, 
-                             ('Negative', self.image_negative)]  
+                             ('Negative', self.image_negative), 
+                             ("Thresholding", self.image_thresholding)]  
         advanced_menu_options = [('Turn to HSV', self.show_hist)]
 
         menu_options = {'Image': image_menu_options,
@@ -54,7 +55,7 @@ class MainWindow:
         self.root.pack_propagate(0)
 
         self.windows = []
-        self.result_img = {}
+        self.unsaved_imgs = {}
 
         self.root.mainloop()
 
@@ -76,7 +77,7 @@ class MainWindow:
 
     # Save Image
     def save_image_window(self):
-        if len(self.result_img) == 0:
+        if len(self.unsaved_imgs) == 0:
             top = Toplevel()
             Label(top, text="No photo to save").grid(row=0, column=0, columnspan=3)
             Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
@@ -87,7 +88,7 @@ class MainWindow:
                 return
             save(img, filename)
 
-            self.result_img.pop(title)
+            self.unsaved_imgs.pop(title)
 
             top = Toplevel()
             Label(top, text="Photo saved successfully").grid(row=0, column=0, columnspan=3)
@@ -96,12 +97,12 @@ class MainWindow:
     # Create Image with white Circle in the middle
     def create_circle(self):
         window = ImageWindow(self, np.asarray(bin_circle()))
-        self.result_img[window.title] = window.img
+        self.unsaved_imgs[window.title] = window.img
 
     # Create Image with white Square in the middle
     def create_square(self):
         window = ImageWindow(self, np.asarray(bin_rectangle()))
-        self.result_img[window.title] = window.img
+        self.unsaved_imgs[window.title] = window.img
 
     # Get pixel value
     def get_pixel_value(self):
@@ -139,7 +140,7 @@ class MainWindow:
             Label(frame, text="Pixel's value on (" + str(x) + ", " + str(y) + "): " + str(new_value))\
                 .grid(row=0, column=0, columnspan=3)
             Button(frame, text="Done", command=info_window.destroy, padx=20).grid(row=2, column=1)
-            self.result_img[window.title] = window.img
+            self.unsaved_imgs[window.title] = window.img
 
     # Add two images
     def sum_images(self): 
@@ -150,7 +151,8 @@ class MainWindow:
         else: 
             windows = self.select_from_to_windows()
             new_img = add(windows[0].img, windows[1].img)
-            ImageWindow(self, new_img)
+            img_window = ImageWindow(self, new_img)
+            self.unsaved_imgs[img_window.title] = img_window.img
     
     # Subtract two images
     def subtract_images(self): 
@@ -161,7 +163,8 @@ class MainWindow:
         else: 
             windows = self.select_from_to_windows()
             new_img = subtract(windows[0].img, windows[1].img)
-            ImageWindow(self, new_img)
+            img_window = ImageWindow(self, new_img)
+            self.unsaved_imgs[img_window.title] = img_window.img
 
     # Multiply two images
     def multiply_images(self): 
@@ -172,7 +175,8 @@ class MainWindow:
         else: 
             windows = self.select_from_to_windows()
             new_img = multiply(windows[0].img, windows[1].img)
-            ImageWindow(self, new_img)
+            img_window = ImageWindow(self, new_img)
+            self.unsaved_imgs[img_window.title] = img_window.img
             
     # Get image's negaive        
     def image_negative(self):
@@ -184,7 +188,20 @@ class MainWindow:
             img = self.select_img_from_windows()
             new_img = negative(img)
             window = ImageWindow(self, new_img)
-            self.result_img[window.title] = window.img
+            self.unsaved_imgs[window.title] = window.img
+
+    
+    def image_thresholding(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            threshold = self.ask_for_threshold()
+            new_img = thresholding(threshold, img)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
 
 
     # Exit
@@ -225,6 +242,7 @@ class MainWindow:
                 menu.add_command(label=option[0], command=option[1])
         self.menubar.add_cascade(label=label, menu=menu)
 
+
     def select_img_from_windows(self):
         window = self.select_window()
         return window.img
@@ -257,15 +275,15 @@ class MainWindow:
 
     
     def select_save_window(self):
-        if len(self.result_img) == 1:
-            return list(self.result_img.items())[0]
+        if len(self.unsaved_imgs) == 1:
+            return list(self.unsaved_imgs.items())[0]
         window = Toplevel()
         frame = Frame(window)
         frame.pack()
         Label(frame, text="Select image").grid(row=0, column=0, columnspan=3)
 
         clicked = StringVar()
-        options = list(self.result_img.keys())
+        options = list(self.unsaved_imgs.keys())
 
         clicked.set(options[0])
 
@@ -277,9 +295,9 @@ class MainWindow:
         frame.wait_variable(window_name_var)
         window_name = window_name_var.get()
         window.destroy()
-        for image_window in self.result_img.keys():
+        for image_window in self.unsaved_imgs.keys():
             if image_window == window_name:
-                return (image_window, self.result_img.get(image_window))
+                return (image_window, self.unsaved_imgs.get(image_window))
 
     
     def select_from_to_windows(self):
@@ -427,7 +445,7 @@ class MainWindow:
         button = Button(frame,
                         text="Enter",
                         command=(
-                            lambda: (height_var.set(int(height_entry.get())), width_var.set(int(height_entry.get())))),
+                            lambda: (height_var.set(int(height_entry.get())), width_var.set(int(width_entry.get())))),
                         padx=20)
         button.grid(row=1, column=2)
 
@@ -436,5 +454,27 @@ class MainWindow:
         window.destroy()
         return w, h
 
+    @staticmethod
+    def ask_for_threshold():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+
+        Label(frame, text="Enter threshold:").grid(row=0, column=0)
+        threshold_entry = Entry(frame, width=10)
+        threshold_entry.grid(row=1, column=0)
+
+        threshold_var = IntVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (threshold_var.set(int(threshold_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=1)
+
+        frame.wait_variable(threshold_var)
+        threshold = threshold_var.get()
+        window.destroy()
+        return threshold
 
 

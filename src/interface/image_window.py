@@ -87,8 +87,8 @@ class ImageWindow:
     # This executes when closing window
     def destroy_window(self):
         self.main_window.windows.remove(self)
-        if self.title in self.main_window.result_img.keys():
-            self.main_window.result_img.pop(self.title)
+        if self.title in self.main_window.unsaved_imgs.keys():
+            self.main_window.unsaved_imgs.pop(self.title)
         for i in range(0, len(self.main_window.windows)):
             window = self.main_window.windows[i]
             window.modify_id(i)

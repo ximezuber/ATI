@@ -202,3 +202,29 @@ def plot_hist_hsv(image):
 def negative(img):
     neg = lambda x: - x + 255
     return neg(img)
+
+
+def thresholding(threshold, img):
+    new_img = np.copy(img)
+    height = img.shape[1]
+    width = img.shape[0]
+    if len(img.shape) == 2:
+        for w in range(0, width):
+            for h in range(0, height):
+                
+                if new_img[w, h] < threshold:
+                    new_img[w, h] = 0
+                else:
+                    new_img[w, h] = 255
+    else:
+        channels = img.shape[2]
+        for c in range(0, channels):
+            for w in range(0, width):
+                for h in range(0, height):
+                    
+                    if new_img[w, h, c] < threshold:
+                        new_img[w, h, c] = 0
+                    else:
+                        new_img[w, h, c] = 255
+        
+    return new_img
