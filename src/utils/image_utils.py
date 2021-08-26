@@ -228,14 +228,10 @@ def thresholding(threshold, img):
                         new_img[w, h, c] = 0
                     else:
                         new_img[w, h, c] = 255
-
     return new_img
 
 
 def power(img, gamma):
-    if (not 0 < gamma < 2) or gamma == 1:
-        raise 'Invalid gamma'
-
     max_pixel_value = 256
     c = (max_pixel_value - 1) ** (1 - gamma)
     function = lambda x: c * (x ** gamma)
