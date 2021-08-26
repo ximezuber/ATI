@@ -554,6 +554,64 @@ class MainWindow:
         lambda_entry = Entry(frame, width=10)
         lambda_entry.grid(row=1, column=0)
 
+    @staticmethod
+    def ask_gaussian_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter mean:").grid(row=0, column=0)
+        mean_entry = Entry(frame, width=10)
+        mean_entry.grid(row=1, column=0)
+
+        Label(frame, text="Enter standard deviation:").grid(row=0, column=1)
+        std_entry = Entry(frame, width=10)
+        std_entry.grid(row=1, column=1)
+
+        mean_var = DoubleVar()
+        std_var = DoubleVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (mean_var.set(float(mean_entry.get())), std_var.set(float(std_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=2)
+
+        frame.wait_variable(std_var)
+        m, s = mean_var.get(), std_var.get()
+        window.destroy()
+        return m, s
+
+    @staticmethod
+    def ask_rayleigh_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter phi:").grid(row=0, column=0)
+        phi_entry = Entry(frame, width=10)
+        phi_entry.grid(row=1, column=0)
+
+        phi_var = DoubleVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (phi_var.set(float(phi_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=1)
+
+        frame.wait_variable(phi_var)
+        phi = phi_var.get()
+        window.destroy()
+        return phi
+
+    @staticmethod
+    def ask_exponential_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter lambda:").grid(row=0, column=0)
+        lambda_entry = Entry(frame, width=10)
+        lambda_entry.grid(row=1, column=0)
+
         lambda_var = DoubleVar()
         button = Button(frame,
                         text="Enter",
