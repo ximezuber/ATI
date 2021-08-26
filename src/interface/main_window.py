@@ -33,8 +33,10 @@ class MainWindow:
                              ('Multiply', self.multiply_images),
                              None, 
                              ('Negative', self.image_negative), 
-                             ("Thresholding", self.image_thresholding)]  
-        advanced_menu_options = [('Turn to HSV', self.show_hist)]
+                             ("Thresholding", self.image_thresholding),
+                             ('Power function', self.power_gamma)]
+        advanced_menu_options = [('Show histogram', self.show_hist),
+                                 ('Show HSV histogram', self.show_hsv_hist)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
@@ -203,13 +205,26 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
+    def power_gamma(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            gamma = self.ask_for_gamma()
+            new_img = power(img, gamma)
+            print(new_img)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
 
     # Exit
     def ask_quit(self):
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
             self.root.destroy()
 
-    # Show RGB histograms
+    # Show RGB and gray histograms
     def show_hist(self):
         if len(self.windows) == 0:
             top = Toplevel()
@@ -218,9 +233,17 @@ class MainWindow:
         else:
             img = self.select_img_from_windows()
             plot_hist_rgb(img)
+
+    # Show HSV histograms
+    def show_hsv_hist(self):
+        if len(self.windows) == 0:
+            top = Toplevel()
+            Label(top, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
             converted = rgb_to_hsv(img)
             plot_hist_hsv(converted)
-            
 
     # Selection mode
     def select(self):
@@ -476,5 +499,28 @@ class MainWindow:
         threshold = threshold_var.get()
         window.destroy()
         return threshold
+
+    @staticmethod
+    def ask_for_gamma():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+
+        Label(frame, text="Enter gamma:").grid(row=0, column=0)
+        gamma_entry = Entry(frame, width=10)
+        gamma_entry.grid(row=1, column=0)
+
+        gamma_var = DoubleVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (gamma_var.set(float(gamma_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=1)
+
+        frame.wait_variable(gamma_var)
+        gamma = gamma_var.get()
+        window.destroy()
+        return gamma
 
 

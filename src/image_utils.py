@@ -3,6 +3,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+
 def load(filename, w=None, h=None):
     if filename.lower().endswith('.raw'):
         img = np.fromfile(filename, dtype=np.uint8)
@@ -42,18 +43,19 @@ def paste_section(image_to_cut, x_start, y_start, x_end, y_end, new_image, new_u
 
 
 def bin_circle(radius=50, img_height=200, img_width=200):
-    img = Image.new("L", (img_width, img_height)) 
+    img = Image.new("L", (img_width, img_height))
     draw = ImageDraw.Draw(img)
-    ellipse_shape = (img_width/2-radius, img_height/2-radius, img_width/2+radius, img_height/2+radius)
+    ellipse_shape = (img_width / 2 - radius, img_height / 2 - radius, img_width / 2 + radius, img_height / 2 + radius)
     draw.ellipse(ellipse_shape, fill="white")
     return img
     # img.save('circle.jpg', quality=95)  # TODO: check extension
 
 
 def bin_rectangle(hor_len=150, ver_len=150, img_height=200, img_width=200):
-    img = Image.new("L", (img_width, img_height)) 
+    img = Image.new("L", (img_width, img_height))
     draw = ImageDraw.Draw(img)
-    rectangle_shape = ((img_width/2-hor_len/2, img_height/2-ver_len/2), (img_width/2+hor_len/2, img_height/2+ver_len/2))
+    rectangle_shape = ((img_width / 2 - hor_len / 2, img_height / 2 - ver_len / 2),
+                       (img_width / 2 + hor_len / 2, img_height / 2 + ver_len / 2))
     draw.rectangle(rectangle_shape, fill="white")
     return img
     # img.save('rectangle.jpg', quality=95)  # TODO: check extension
@@ -61,7 +63,7 @@ def bin_rectangle(hor_len=150, ver_len=150, img_height=200, img_width=200):
 
 def add(im1, im2):
     ans = np.add(im1.astype(np.uint32), im2.astype(np.uint32))
-    ans = normalize(ans, 0, 255+255)
+    ans = normalize(ans, 0, 255 + 255)
     return ans
 
 
@@ -73,7 +75,7 @@ def subtract(im1, im2):
 
 def multiply(im1, im2):
     ans = np.multiply(im1.astype(np.uint32), im2.astype(np.uint32))
-    ans = normalize(ans, 0, 255*255)
+    ans = normalize(ans, 0, 255 * 255)
     return ans
 
 
@@ -106,7 +108,7 @@ def split_hsv(img):
 def pixels_info(pixels):
     w = pixels.shape[0]
     h = pixels.shape[1]
-    count = w*h
+    count = w * h
     mean = np.mean(pixels, axis=(0, 1))
     return count, mean
 
@@ -123,7 +125,7 @@ def plot_hist_rgb(image):
             channel = image[:, :, i]
             plt.hist(
                 channel.ravel(),
-                bins= 256,
+                bins=256,
                 weights=np.zeros_like(channel).ravel() + 1.0 / channel.size,
                 color=color[i],
             )
@@ -142,7 +144,7 @@ def plot_hist_rgb(image):
 
         plt.xlabel("Intensity Value")
         plt.legend(legends)
-        # plt.show()
+        plt.show()
     else:
         plt.figure()
         plt.hist(
@@ -152,7 +154,7 @@ def plot_hist_rgb(image):
         )
         plt.xlabel("Intensity Value")
         plt.legend("Gray scale")
-        # plt.show()
+        plt.show()
 
 
 def plot_hist_hsv(image):
@@ -167,7 +169,7 @@ def plot_hist_hsv(image):
             channel = image[:, :, i]
             plt.hist(
                 channel.ravel(),
-                bins= 256,
+                bins=256,
                 weights=np.zeros_like(channel).ravel() + 1.0 / channel.size,
                 color=color[i],
             )
@@ -211,7 +213,7 @@ def thresholding(threshold, img):
     if len(img.shape) == 2:
         for w in range(0, width):
             for h in range(0, height):
-                
+
                 if new_img[w, h] < threshold:
                     new_img[w, h] = 0
                 else:
@@ -221,10 +223,20 @@ def thresholding(threshold, img):
         for c in range(0, channels):
             for w in range(0, width):
                 for h in range(0, height):
-                    
+
                     if new_img[w, h, c] < threshold:
                         new_img[w, h, c] = 0
                     else:
                         new_img[w, h, c] = 255
-        
+
     return new_img
+
+
+def power(img, gamma):
+    if (not 0 < gamma < 2) or gamma == 1:
+        raise 'Invalid gamma'
+
+    max_pixel_value = 256
+    c = (max_pixel_value - 1) ** (1 - gamma)
+    function = lambda x: c * (x ** gamma)
+    return function(np.copy(img)).astype(np.uint8)
