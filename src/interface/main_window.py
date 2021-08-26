@@ -39,7 +39,11 @@ class MainWindow:
                              ('Negative', self.image_negative), 
                              ("Thresholding", self.image_thresholding)]  
         advanced_menu_options = [('Turn to HSV', self.show_hist)]
-        noise_menu_options = [('Show Generator Hist', self.show_gen_hist)]
+        noise_menu_options = [('Show Generator Histograms', self.show_gen_hist), 
+                              None,
+                              ("Add Gaussian Noise", self.add_gaussian_noise),
+                              ("Add Rayleigh Noise", self.add_rayleigh_noise),
+                              ("Add Exponential Noise", self.add_exponential_noise)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
@@ -239,7 +243,72 @@ class MainWindow:
         elif dist == "Exponential":
             lam = self.ask_exponential_args()
             plot_gen_hist(ExponentialGenerator(lam, 1000), dist)
-            
+    
+    # Add Gaussian Noise to image
+    def add_gaussian_noise(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else: 
+            img = self.select_img_from_windows()
+            threshold = self.ask_for_threshold()
+            if 0.0 <= threshold <= 1.0:
+                mean, std = self.ask_gaussian_args()
+
+                size = img.size
+
+                new_img = apply_noise(img, GaussianGenerator(mean, std, size), threshold, True)
+                window = ImageWindow(self, new_img)
+                self.unsaved_imgs[window.title] = window.img
+            else:
+                messagebox.showerror(
+                title="Error", message="Threshold should be between 0 and 1."
+                )
+
+    # Add Rayleigh Noise to image
+    def add_rayleigh_noise(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else: 
+            img = self.select_img_from_windows()
+            threshold = self.ask_for_threshold()
+            if 0.0 <= threshold <= 1.0:
+                phi = self.ask_rayleigh_args()
+
+                size = img.size
+
+                new_img = apply_noise(img, RayleighGenerator(phi, size), threshold, False)
+                window = ImageWindow(self, new_img)
+                self.unsaved_imgs[window.title] = window.img
+            else:
+                messagebox.showerror(
+                title="Error", message="Threshold should be between 0 and 1."
+                )
+
+    # Add Exponential Noise to image
+    def add_exponential_noise(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else: 
+            img = self.select_img_from_windows()
+            threshold = self.ask_for_threshold()
+            if 0.0 <= threshold <= 1.0:
+                lam = self.ask_exponential_args()
+
+                size = img.size
+
+                new_img = apply_noise(img, ExponentialGenerator(lam, size), threshold, False)
+                window = ImageWindow(self, new_img)
+                self.unsaved_imgs[window.title] = window.img
+            else:
+                messagebox.showerror(
+                title="Error", message="Threshold should be between 0 and 1."
+                )
 
     # Selection mode
     def select(self):
@@ -483,11 +552,11 @@ class MainWindow:
         threshold_entry = Entry(frame, width=10)
         threshold_entry.grid(row=1, column=0)
 
-        threshold_var = IntVar()
+        threshold_var = DoubleVar()
         button = Button(frame,
                         text="Enter",
                         command=(
-                            lambda: (threshold_var.set(int(threshold_entry.get())))),
+                            lambda: (threshold_var.set(float(threshold_entry.get())))),
                         padx=20)
         button.grid(row=1, column=1)
 
