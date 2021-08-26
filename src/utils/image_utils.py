@@ -197,3 +197,4 @@ def plot_hist_hsv(image):
         plt.xlabel("Intensity Value")
         plt.legend("Gray scale")
         plt.show()
+        

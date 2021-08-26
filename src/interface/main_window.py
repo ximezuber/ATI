@@ -1,8 +1,12 @@
+from src.utils.noise_utils import *
 from src.interface.image_window import ImageWindow
 from tkinter import *
-from src.image_utils import *
+from src.utils.image_utils import *
 from numpy import copy
 from tkinter import filedialog, messagebox
+from src.utils.random_generator import (GaussianGenerator, 
+                                        RayleighGenerator, 
+                                        ExponentialGenerator)
 
 
 class MainWindow:
@@ -32,10 +36,12 @@ class MainWindow:
                              ('Subtract', self.subtract_images, None),  
                              ('Multiply', self.multiply_images, None)]  
         advanced_menu_options = [('Turn to HSV', self.show_hist)]
+        noise_menu_options = [('Show Generator Hist', self.show_gen_hist)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
-                        'Advanced': advanced_menu_options}
+                        'Advanced': advanced_menu_options,
+                        "Noise": noise_menu_options}
 
         for option in menu_options.keys():
             self._add_to_menu(option, menu_options[option])
@@ -186,6 +192,19 @@ class MainWindow:
             plot_hist_rgb(img)
             converted = rgb_to_hsv(img)
             plot_hist_hsv(converted)
+
+    # Shows histogram for a random number generator
+    def show_gen_hist(self):
+        dist = self.ask_distribution()
+        if dist == "Gaussian":
+            mean, std = self.ask_gaussian_args()
+            plot_gen_hist(GaussianGenerator(mean, std, 1000), dist)
+        elif dist == "Rayleigh":
+            phi = self.ask_rayleigh_args()
+            plot_gen_hist(RayleighGenerator(phi, 1000), dist)
+        elif dist == "Exponential":
+            lam = self.ask_exponential_args()
+            plot_gen_hist(ExponentialGenerator(lam, 1000), dist)
             
 
     # Selection mode
@@ -392,5 +411,95 @@ class MainWindow:
         window.destroy()
         return w, h
 
+    @staticmethod
+    def ask_gaussian_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter mean:").grid(row=0, column=0)
+        mean_entry = Entry(frame, width=10)
+        mean_entry.grid(row=1, column=0)
 
+        Label(frame, text="Enter standard deviation:").grid(row=0, column=1)
+        std_entry = Entry(frame, width=10)
+        std_entry.grid(row=1, column=1)
 
+        mean_var = DoubleVar()
+        std_var = DoubleVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (mean_var.set(float(mean_entry.get())), std_var.set(float(std_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=2)
+
+        frame.wait_variable(std_var)
+        m, s = mean_var.get(), std_var.get()
+        window.destroy()
+        return m, s
+
+    @staticmethod
+    def ask_rayleigh_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter phi:").grid(row=0, column=0)
+        phi_entry = Entry(frame, width=10)
+        phi_entry.grid(row=1, column=0)
+
+        phi_var = DoubleVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (phi_var.set(float(phi_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=1)
+
+        frame.wait_variable(phi_var)
+        phi = phi_var.get()
+        window.destroy()
+        return phi
+
+    @staticmethod
+    def ask_exponential_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter lambda:").grid(row=0, column=0)
+        lambda_entry = Entry(frame, width=10)
+        lambda_entry.grid(row=1, column=0)
+
+        lambda_var = DoubleVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (lambda_var.set(float(lambda_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=1)
+
+        frame.wait_variable(lambda_var)
+        lam = lambda_var.get()
+        window.destroy()
+        return lam
+
+    @staticmethod
+    def ask_distribution():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Select Distribution").grid(row=0, column=0, columnspan=3)
+
+        clicked = StringVar()
+        options = ["Gaussian", "Rayleigh", "Exponential"]
+
+        clicked.set(options[0])
+
+        op_menu = OptionMenu(frame, clicked, *options)
+        op_menu.grid(row=1, column=0, columnspan=2)
+
+        dist_var = StringVar()
+        Button(frame, text="Select", command=(lambda: dist_var.set(clicked.get()))).grid(row=1, column=2)
+        frame.wait_variable(dist_var)
+        dist_val = dist_var.get()
+        window.destroy()
+        return dist_val
