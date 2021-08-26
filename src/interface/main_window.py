@@ -43,7 +43,8 @@ class MainWindow:
                               None,
                               ("Add Gaussian Noise", self.add_gaussian_noise),
                               ("Add Rayleigh Noise", self.add_rayleigh_noise),
-                              ("Add Exponential Noise", self.add_exponential_noise)]
+                              ("Add Exponential Noise", self.add_exponential_noise),
+                              ("Add Salt and Pepper Noise", self.add_salt_peppper_noise)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
@@ -303,6 +304,24 @@ class MainWindow:
                 size = img.size
 
                 new_img = apply_noise(img, ExponentialGenerator(lam, size), threshold, False)
+                window = ImageWindow(self, new_img)
+                self.unsaved_imgs[window.title] = window.img
+            else:
+                messagebox.showerror(
+                title="Error", message="Threshold should be between 0 and 1."
+                )
+
+    # Add Salt and Pepper Noise to image
+    def add_salt_peppper_noise(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else: 
+            img = self.select_img_from_windows()
+            threshold = self.ask_for_threshold()
+            if 0.0 <= threshold <= 1.0:
+                new_img = apply_salt_pepper_noise(img, threshold)
                 window = ImageWindow(self, new_img)
                 self.unsaved_imgs[window.title] = window.img
             else:

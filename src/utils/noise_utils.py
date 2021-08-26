@@ -20,14 +20,38 @@ def apply_noise(image, generator: Generator, threshold, is_additive: bool):
     noise = generator.generate()
     noise = np.array(noise).reshape(image.shape)
 
-    mask = np.random.uniform(low=0.0, high=1.0, size=image.shape)
-    mask = np.where(mask > threshold, 1.0, 0.0)
+    random_layer = np.random.uniform(low=0.0, high=1.0, size=image.shape)
+    random_layer = np.where(random_layer > threshold, 1.0, 0.0)
 
     if is_additive:
-        result = image + mask * noise
+        result = image + random_layer * noise
     else:
-        result = image * mask * noise
+        result = image * random_layer * noise
 
     result = normalize(result, min(result.flatten()), max(result.flatten()))
     
+    return result
+
+
+def apply_salt_pepper_noise(image, p0):
+    if (p0 > 0.5):
+        p1 = p0
+        p0 = 1 - p1
+    else:
+        p1 = 1 - p0
+
+    
+    random_layer = np.random.uniform(low=0.0, high=1.0, size=image.shape)
+    # Sets to 0 all pixels < p0
+    random_layer_p0 = np.where(random_layer > p0, 1.0, 0.0)
+    # Set to 0 all pixel > p1, so that they can be added later as 255
+    random_layer_not_p1 = np.where(random_layer < p1, 1.0, 0.0)
+    # Set to 255 all pixel > p1
+    random_layer_p1 = np.where(random_layer > p1, 255.0, 0.0)
+
+    result = image * random_layer_p0
+    result = result * random_layer_not_p1 + random_layer_p1
+
+    result = result.astype(np.uint8)
+
     return result
