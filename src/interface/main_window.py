@@ -1,4 +1,4 @@
-from src.utils.mask_utils import mean_filter
+from src.utils.mask_utils import *
 from src.utils.noise_utils import *
 from src.interface.image_window import ImageWindow
 from tkinter import *
@@ -49,7 +49,8 @@ class MainWindow:
                               ("Add Exponential Noise", self.add_exponential_noise),
                               ("Add Salt and Pepper Noise", self.add_salt_peppper_noise)]
 
-        filter_menu_options = [('Mean filter', self.mean_filter)]
+        filter_menu_options = [('Mean filter', self.mean_filter),
+                               ('Medianan filter', self.median_filter)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
@@ -372,6 +373,18 @@ class MainWindow:
             img = self.select_img_from_windows()
             mask_size = self.ask_for_mask_size()
             new_img = mean_filter(img, mask_size)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    def median_filter(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            mask_size = self.ask_for_mask_size()
+            new_img = median_filter(img, mask_size)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 

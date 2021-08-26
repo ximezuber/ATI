@@ -3,7 +3,7 @@ from numpy import copy
 import numpy as np
 
 
-def mean_filter(img, mask_side):
+def apply_function_in_mask(img, mask_side, function):
     new_img = copy(img)
     aux_img = copy(img)
     first_column = img[:, 0]
@@ -24,9 +24,15 @@ def mean_filter(img, mask_side):
             end_aux_row = j + mask_side
             if len(img.shape) > 2:
                 for k in range(0, len(img[0][0])):
-                    new_img[i][j][k] = np.mean(aux_img[i: end_aux_col,
-                                               j: end_aux_row, k])
+                    new_img[i][j][k] = function(aux_img[i: end_aux_col, j: end_aux_row, k])
             else:
-                new_img[i][j] = np.mean(aux_img[i: end_aux_col,
-                                          j: end_aux_row])
+                new_img[i][j] = np.mean(aux_img[i: end_aux_col, j: end_aux_row])
     return new_img
+
+
+def mean_filter(img, mask_side):
+    return apply_function_in_mask(img, mask_side, np.mean)
+
+
+def median_filter(img, mask_side):
+    return apply_function_in_mask(img, mask_side, np.median)
