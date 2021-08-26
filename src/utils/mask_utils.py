@@ -2,6 +2,8 @@ from numpy import copy
 
 import numpy as np
 
+from src.utils.image_utils import normalize
+
 
 def fill_outer_matrix(image, mask_side):
     img = copy(image)
@@ -72,7 +74,6 @@ def weighted_median(frame, mask):
 
 def gaussian_filter(img, mask_side, deviation):
     mask = gaussian_mask(mask_side, deviation)
-    print(mask)
     new_img = copy(img)
     aux_img = fill_outer_matrix(img, mask_side)
     for i in range(0, len(img)):
@@ -81,18 +82,18 @@ def gaussian_filter(img, mask_side, deviation):
             end_aux_row = j + mask_side
             if len(img.shape) > 2:
                 for k in range(0, len(img[0][0])):
-                    new_img[i][j][k] = gaussian_mean(aux_img[i: end_aux_col, j: end_aux_row, k], mask)
+                    new_img[i][j][k] = weighted_mean(aux_img[i: end_aux_col, j: end_aux_row, k], mask)
             else:
-                new_img[i][j] = gaussian_mean(aux_img[i: end_aux_col, j: end_aux_row], mask)
+                new_img[i][j] = weighted_mean(aux_img[i: end_aux_col, j: end_aux_row], mask)
+    new_img = normalize(new_img, 0, np.mean(255*mask))
     return new_img
 
 
-def gaussian_mean(frame, mask):
+def weighted_mean(frame, mask):
     mean_list = []
     for i in range(0, len(frame)):
         for j in range(0, len(frame[0])):
-            for k in range(0, mask[i][j]):
-                mean_list.append(frame[i][j])
+            mean_list.append(mask[i][j] * frame[i][j])
     return np.mean(mean_list)
 
 
@@ -104,7 +105,6 @@ def gaussian_mask(mask_side, deviation, mean=0):
     gauss = gauss_standard * 10**decimal_places(gauss_standard[0][0])  # el (0,0) es el valor mas bajo de la matriz,
                                                                        # esta mas lejos del centro
     gauss = gauss.astype(np.uint8)
-    print(gauss)
     return gauss
 
 
@@ -118,3 +118,25 @@ def decimal_places(number):
         number *= 10
         i += 1
     return i
+
+
+def border_mask(mask_side):
+    mask = -np.ones((mask_side, mask_side))
+    mask[mask_side // 2 + 1][mask_side // 2 + 1] = mask_side * mask_side + 1
+    return mask
+
+def border_filter(img, mask_side):
+    mask = border_mask(mask_side)
+    new_img = copy(img)
+    aux_img = fill_outer_matrix(img, mask_side)
+    for i in range(0, len(img)):
+        end_aux_col = i + mask_side
+        for j in range(0, len(img[0])):
+            end_aux_row = j + mask_side
+            if len(img.shape) > 2:
+                for k in range(0, len(img[0][0])):
+                    new_img[i][j][k] = weighted_mean(aux_img[i: end_aux_col, j: end_aux_row, k], mask)
+            else:
+                new_img[i][j] = weighted_mean(aux_img[i: end_aux_col, j: end_aux_row], mask)
+    new_img = normalize(new_img, np.mean(-255 * mask[mask_side//2 + 1][mask_side//2 + 1]), np.mean(255 * mask[mask_side//2 + 1][mask_side//2 + 1]))
+    return new_img

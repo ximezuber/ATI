@@ -52,7 +52,8 @@ class MainWindow:
         filter_menu_options = [('Mean filter', self.mean_filter),
                                ('Median filter', self.median_filter),
                                ('Gaussian mean filter', self.gaussian_filter),
-                               ('Weighted median filter', self.weighted_median_filter)]
+                               ('Weighted median filter', self.weighted_median_filter),
+                               ('Border filter', self.border_filter)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
@@ -410,6 +411,18 @@ class MainWindow:
         else:
             img = self.select_img_from_windows()
             new_img = weighted_median_filter(img)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    def border_filter(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            mask_size = self.ask_for_mask_size()
+            new_img = border_filter(img, mask_size)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
