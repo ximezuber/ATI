@@ -1,3 +1,4 @@
+from src.utils.mask_utils import mean_filter
 from src.utils.noise_utils import *
 from src.interface.image_window import ImageWindow
 from tkinter import *
@@ -48,10 +49,13 @@ class MainWindow:
                               ("Add Exponential Noise", self.add_exponential_noise),
                               ("Add Salt and Pepper Noise", self.add_salt_peppper_noise)]
 
+        filter_menu_options = [('Mean filter', self.mean_filter)]
+
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
                         'Advanced': advanced_menu_options,
-                        "Noise": noise_menu_options}
+                        "Noise": noise_menu_options,
+                        "Filter": filter_menu_options}
 
         for option in menu_options.keys():
             self._add_to_menu(option, menu_options[option])
@@ -358,6 +362,18 @@ class MainWindow:
                 messagebox.showerror(
                 title="Error", message="Threshold should be between 0 and 1."
                 )
+
+    def mean_filter(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            mask_size = self.ask_for_mask_size()
+            new_img = mean_filter(img, mask_size)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
 
     # Selection mode
     def select(self):
@@ -729,3 +745,25 @@ class MainWindow:
         dist_val = dist_var.get()
         window.destroy()
         return dist_val
+
+    @staticmethod
+    def ask_for_mask_size():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter mask side:").grid(row=0, column=0)
+        side_entry = Entry(frame, width=10)
+        side_entry.grid(row=1, column=0)
+
+        side_var = IntVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (side_var.set(int(side_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=1)
+
+        frame.wait_variable(side_var)
+        side = side_var.get()
+        window.destroy()
+        return side
