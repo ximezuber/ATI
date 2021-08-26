@@ -228,3 +228,4 @@ def thresholding(threshold, img):
                         new_img[w, h, c] = 255
         
     return new_img
+        

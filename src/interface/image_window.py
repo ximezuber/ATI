@@ -1,4 +1,4 @@
-from src.image_utils import paste_section, pixels_info
+from src.utils.image_utils import paste_section, pixels_info
 from tkinter import *
 
 from PIL import ImageTk, Image
