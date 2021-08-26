@@ -50,7 +50,9 @@ class MainWindow:
                               ("Add Salt and Pepper Noise", self.add_salt_peppper_noise)]
 
         filter_menu_options = [('Mean filter', self.mean_filter),
-                               ('Medianan filter', self.median_filter)]
+                               ('Median filter', self.median_filter),
+                               ('Gaussian mean filter', self.gaussian_filter),
+                               ('Weighted median filter', self.weighted_median_filter)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
@@ -385,6 +387,29 @@ class MainWindow:
             img = self.select_img_from_windows()
             mask_size = self.ask_for_mask_size()
             new_img = median_filter(img, mask_size)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    def gaussian_filter(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            mask_size, deviation = self.ask_for_mask_size_and_deviation()
+            new_img = gaussian_filter(img, mask_size, deviation)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    def weighted_median_filter(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            new_img = weighted_median_filter(img)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
@@ -780,3 +805,30 @@ class MainWindow:
         side = side_var.get()
         window.destroy()
         return side
+
+    @staticmethod
+    def ask_for_mask_size_and_deviation():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter mask_side:").grid(row=0, column=0)
+        side_entry = Entry(frame, width=10)
+        side_entry.grid(row=1, column=0)
+
+        Label(frame, text="Enter standard deviation:").grid(row=0, column=1)
+        std_entry = Entry(frame, width=10)
+        std_entry.grid(row=1, column=1)
+
+        side_var = IntVar()
+        std_var = DoubleVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (side_var.set(int(side_entry.get())), std_var.set(float(std_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=2)
+
+        frame.wait_variable(std_var)
+        side, std = side_var.get(), std_var.get()
+        window.destroy()
+        return side, std
