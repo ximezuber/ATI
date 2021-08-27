@@ -140,14 +140,18 @@ def border_filter(img, mask_side):
                     new_img[i][j][k] = weighted_mean_cells_qty(aux_img[i: end_aux_col, j: end_aux_row, k], mask)
             else:
                 new_img[i][j] = weighted_mean_cells_qty(aux_img[i: end_aux_col, j: end_aux_row], mask)
-    new_img = normalize(new_img, np.mean(-255 * mask[mask_side//2 + 1][mask_side//2 + 1]), np.mean(255 * mask[mask_side//2 + 1][mask_side//2 + 1]))
+    min_frame = 255*np.ones(mask.shape, dtype=np.uint8)
+    min_frame[mask_side // 2][mask_side // 2] = 0
+    max_frame = np.zeros(mask.shape, dtype=np.uint8)
+    max_frame[mask_side // 2][mask_side // 2] = 255
+    new_img = normalize(new_img, weighted_mean_cells_qty(min_frame, mask), weighted_mean_cells_qty(max_frame, mask))
     return new_img
 
 def weighted_mean_cells_qty(frame, mask):
     frame_aux = frame.astype(np.int64)
-    mean_list = []
+    accum = 0
     for i in range(0, len(frame_aux)):
         for j in range(0, len(frame_aux[0])):
-            mean_list.append(mask[i][j] * frame_aux[i][j])
+            accum += mask[i][j] * frame_aux[i][j]
 
-    return np.sum(mean_list) / (len(mask) * len(mask[0]))
+    return accum / (len(mask) * len(mask[0]))
