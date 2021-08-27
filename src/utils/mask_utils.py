@@ -130,6 +130,7 @@ def border_mask(mask_side):
 def border_filter(img, mask_side):
     mask = border_mask(mask_side)
     new_img = copy(img)
+    new_img = new_img.astype(np.int64)
     aux_img = fill_outer_matrix(img, mask_side)
     for i in range(0, len(img)):
         end_aux_col = i + mask_side
@@ -144,7 +145,7 @@ def border_filter(img, mask_side):
     min_frame[mask_side // 2][mask_side // 2] = 0
     max_frame = np.zeros(mask.shape, dtype=np.uint8)
     max_frame[mask_side // 2][mask_side // 2] = 255
-    new_img = normalize(new_img, weighted_mean_cells_qty(min_frame, mask), weighted_mean_cells_qty(max_frame, mask))
+    new_img = normalize(new_img, np.floor(weighted_mean_cells_qty(min_frame, mask)), np.ceil(weighted_mean_cells_qty(max_frame, mask)))
     return new_img
 
 def weighted_mean_cells_qty(frame, mask):
@@ -153,5 +154,4 @@ def weighted_mean_cells_qty(frame, mask):
     for i in range(0, len(frame_aux)):
         for j in range(0, len(frame_aux[0])):
             accum += mask[i][j] * frame_aux[i][j]
-
     return accum / (len(mask) * len(mask[0]))
