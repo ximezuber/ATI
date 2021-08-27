@@ -39,7 +39,8 @@ class MainWindow:
                              None, 
                              ('Negative', self.image_negative), 
                              ("Thresholding", self.image_thresholding),
-                             ('Power function', self.power_gamma)]
+                             ('Power function', self.power_gamma),
+                             ('Equalize', self.equalize)]
         advanced_menu_options = [('Show histogram', self.show_hist),
                                  ('Show HSV histogram', self.show_hsv_hist)]
         noise_menu_options = [('Show Generator Histograms', self.show_gen_hist),
@@ -234,7 +235,6 @@ class MainWindow:
             gamma = self.ask_for_gamma()
             if (0 < gamma < 2) and gamma != 1:
                 new_img = power(img, gamma)
-                print(new_img)
                 window = ImageWindow(self, new_img)
                 self.unsaved_imgs[window.title] = window.img
             else:
@@ -242,7 +242,16 @@ class MainWindow:
                     title="Error", message="Gamma should be between 0 and 2, and different from 1."
                 )
 
-
+    def equalize(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            new_img = equalize(img)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
 
     # Exit
     def ask_quit(self):

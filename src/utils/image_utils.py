@@ -236,3 +236,54 @@ def power(img, gamma):
     c = (max_pixel_value - 1) ** (1 - gamma)
     function = lambda x: c * (x ** gamma)
     return function(np.copy(img)).astype(np.uint8)
+
+
+def equalize(image):
+
+    if len(image.shape) > 2:
+        new_image = np.zeros(image.shape)
+        for i in range(image.shape[2]):
+            channel = image[:, :, i]
+            h = np.zeros(256)
+            for j in range(0, len(channel)):
+                for k in range(0, len(channel[0])):
+                    h[channel[j][k]] += 1
+            h /= len(channel) * len(channel[0])
+            s = []
+            accum = 0
+            for j in range(0, len(h)):
+                accum += h[j]
+                s.append(accum)
+            smin = s[0]
+            equalized = []
+            for k in range(0, len(s)):
+                equalized.append(int(((s[k] - smin)*255)/(1-smin) + 0.5))
+
+            new_image_channel = np.zeros(channel.shape)
+            for y in range(0, len(channel)):
+                for x in range(0, len(channel[0])):
+                    current_value = channel[y, x]
+                    new_image[y, x, i] = equalized[current_value]
+        return new_image.astype(np.uint8)
+    else:
+        h = np.zeros(256)
+        for j in range(0, len(image)):
+            for k in range(0, len(image[0])):
+                h[image[j][k]] += 1
+        h /= len(image) * len(image[0])
+        s = []
+        accum = 0
+        for j in range(0, len(h)):
+            accum += h[j]
+            s.append(accum)
+        smin = s[0]
+        equalized = []
+        for k in range(0, len(s)):
+            equalized.append(int(((s[k] - smin) * 255) / (1 - smin) + 0.5))
+        new_image = np.zeros(image.shape)
+        for y in range(0, len(image)):
+            for x in range(0, len(image[0])):
+                current_value = image[y, x]
+                new_image[y, x] = equalized[current_value]
+        return new_image.astype(np.uint8)
+
