@@ -124,7 +124,7 @@ def decimal_places(number):
 
 def border_mask(mask_side):
     mask = -np.ones((mask_side, mask_side))
-    mask[mask_side // 2 + 1][mask_side // 2 + 1] = mask_side * mask_side + 1
+    mask[mask_side // 2][mask_side // 2] = mask_side * mask_side - 1
     return mask
 
 def border_filter(img, mask_side):
@@ -137,8 +137,17 @@ def border_filter(img, mask_side):
             end_aux_row = j + mask_side
             if len(img.shape) > 2:
                 for k in range(0, len(img[0][0])):
-                    new_img[i][j][k] = weighted_mean(aux_img[i: end_aux_col, j: end_aux_row, k], mask)
+                    new_img[i][j][k] = weighted_mean_cells_qty(aux_img[i: end_aux_col, j: end_aux_row, k], mask)
             else:
-                new_img[i][j] = weighted_mean(aux_img[i: end_aux_col, j: end_aux_row], mask)
+                new_img[i][j] = weighted_mean_cells_qty(aux_img[i: end_aux_col, j: end_aux_row], mask)
     new_img = normalize(new_img, np.mean(-255 * mask[mask_side//2 + 1][mask_side//2 + 1]), np.mean(255 * mask[mask_side//2 + 1][mask_side//2 + 1]))
     return new_img
+
+def weighted_mean_cells_qty(frame, mask):
+    frame_aux = frame.astype(np.int64)
+    mean_list = []
+    for i in range(0, len(frame_aux)):
+        for j in range(0, len(frame_aux[0])):
+            mean_list.append(mask[i][j] * frame_aux[i][j])
+
+    return np.sum(mean_list) / (len(mask) * len(mask[0]))
