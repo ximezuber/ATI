@@ -21,7 +21,7 @@ def apply_noise(image, generator: Generator, threshold, is_additive: bool):
     noise = np.array(noise).reshape(image.shape)
 
     random_layer = np.random.uniform(low=0.0, high=1.0, size=image.shape)
-    random_layer = np.where(random_layer > threshold, 1.0, 0.0)
+    random_layer = np.where(random_layer < threshold, 1.0, 0.0)
 
     if is_additive:
         result = image + random_layer * noise
