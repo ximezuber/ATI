@@ -85,16 +85,18 @@ def gaussian_filter(img, mask_side, deviation):
                     new_img[i][j][k] = weighted_mean(aux_img[i: end_aux_col, j: end_aux_row, k], mask)
             else:
                 new_img[i][j] = weighted_mean(aux_img[i: end_aux_col, j: end_aux_row], mask)
-    new_img = normalize(new_img, 0, np.mean(255*mask))
+    new_img = normalize(new_img, 0, weighted_mean(255*np.ones((mask_side, mask_side)), mask))
     return new_img
 
 
 def weighted_mean(frame, mask):
+    frame_aux = frame.astype(np.int64)
     mean_list = []
-    for i in range(0, len(frame)):
-        for j in range(0, len(frame[0])):
-            mean_list.append(mask[i][j] * frame[i][j])
-    return np.mean(mean_list)
+    for i in range(0, len(frame_aux)):
+        for j in range(0, len(frame_aux[0])):
+            mean_list.append(mask[i][j] * frame_aux[i][j])
+
+    return np.sum(mean_list) / np.sum(mask)
 
 
 def gaussian_mask(mask_side, deviation, mean=0):
