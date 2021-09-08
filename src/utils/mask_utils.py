@@ -144,7 +144,7 @@ def weighted_mean(frame, mask):
 
 
 def gaussian_mask(deviation, mean=0):
-    mask_side = int(np.ceil(6*deviation))
+    mask_side = int(np.ceil(2*deviation + 1))
     x, y = np.meshgrid(np.linspace(-1, 1, mask_side), np.linspace(-1, 1, mask_side))
     dst = np.sqrt(x * x + y * y)
 
