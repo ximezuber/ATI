@@ -115,8 +115,9 @@ def weighted_median(frame, mask):
     return np.median(median_list)
 
 
-def gaussian_filter(img, mask_side, deviation):
-    mask = gaussian_mask(mask_side, deviation)
+def gaussian_filter(img, deviation):
+    mask = gaussian_mask(deviation)
+    mask_side = len(mask)
     new_img = copy(img)
     aux_img = fill_outer_matrix(img, mask_side)
     for i in range(0, len(img)):
@@ -142,7 +143,8 @@ def weighted_mean(frame, mask):
     return np.sum(mean_list) / np.sum(mask)
 
 
-def gaussian_mask(mask_side, deviation, mean=0):
+def gaussian_mask(deviation, mean=0):
+    mask_side = int(np.ceil(6*deviation))
     x, y = np.meshgrid(np.linspace(-1, 1, mask_side), np.linspace(-1, 1, mask_side))
     dst = np.sqrt(x * x + y * y)
 

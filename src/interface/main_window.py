@@ -412,8 +412,8 @@ class MainWindow:
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
         else:
             img = self.select_img_from_windows()
-            mask_size, deviation = self.ask_for_mask_size_and_deviation()
-            new_img = gaussian_filter(img, mask_size, deviation)
+            deviation = self.ask_for_deviation()
+            new_img = gaussian_filter(img, deviation)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
@@ -883,28 +883,23 @@ class MainWindow:
         return side
 
     @staticmethod
-    def ask_for_mask_size_and_deviation():
+    def ask_for_deviation():
         window = Toplevel()
         frame = Frame(window)
         frame.pack()
-        Label(frame, text="Enter mask_side:").grid(row=0, column=0)
-        side_entry = Entry(frame, width=10)
-        side_entry.grid(row=1, column=0)
 
         Label(frame, text="Enter standard deviation:").grid(row=0, column=1)
         std_entry = Entry(frame, width=10)
         std_entry.grid(row=1, column=1)
 
-        side_var = IntVar()
         std_var = DoubleVar()
         button = Button(frame,
                         text="Enter",
-                        command=(
-                            lambda: (side_var.set(int(side_entry.get())), std_var.set(float(std_entry.get())))),
+                        command=(lambda: (std_var.set(float(std_entry.get())))),
                         padx=20)
         button.grid(row=1, column=2)
 
         frame.wait_variable(std_var)
-        side, std = side_var.get(), std_var.get()
+        std = std_var.get()
         window.destroy()
-        return side, std
+        return std
