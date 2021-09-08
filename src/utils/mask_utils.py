@@ -47,22 +47,22 @@ def median_filter(img, mask_side):
 
 def prewitt_vertical_mask(img):
     mask = [[-1, -1, -1], [0, 0, 0], [1, 1, 1]]
-    return apply_mask_img(img, mask)
+    return apply_mask_img(img, mask, -3*255, 3*255)
 
 
 def prewitt_horizontal_mask(img):
     mask = [[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]]
-    return apply_mask_img(img, mask)
+    return apply_mask_img(img, mask, -3*255, 3*255)
 
 
 def sobel_vertical_mask(img):
     mask = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
-    return apply_mask_img(img, mask)
+    return apply_mask_img(img, mask, -4*255, 4*255)
 
 
 def sobel_horizontal_mask(img):
     mask = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
-    return apply_mask_img(img, mask)
+    return apply_mask_img(img, mask, -4*255, 4*255)
 
 
 def weighted_median_filter(img, mask=None):
@@ -83,9 +83,10 @@ def weighted_median_filter(img, mask=None):
     return new_img
 
 
-def apply_mask_img(img, mask):
+def apply_mask_img(img, mask, min_val, max_val):
     mask_side = len(mask)
     new_img = copy(img)
+    new_img = new_img.astype(np.int64)
     aux_img = fill_outer_matrix(img, mask_side)
     for i in range(0, len(img)):
         end_aux_col = i + mask_side
@@ -96,7 +97,7 @@ def apply_mask_img(img, mask):
                     new_img[i][j][k] = apply_mask_frame(aux_img[i: end_aux_col, j: end_aux_row, k], mask)
             else:
                 new_img[i][j] = apply_mask_frame(aux_img[i: end_aux_col, j: end_aux_row], mask)
-    
+    new_img = normalize(new_img, min_val, max_val)
     return new_img
 
 

@@ -259,7 +259,6 @@ def equalize(image):
             for k in range(0, len(s)):
                 equalized.append(int(((s[k] - smin)*255)/(1-smin) + 0.5))
 
-            new_image_channel = np.zeros(channel.shape)
             for y in range(0, len(channel)):
                 for x in range(0, len(channel[0])):
                     current_value = channel[y, x]
