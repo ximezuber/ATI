@@ -2,7 +2,7 @@ from numpy import copy
 
 import numpy as np
 
-from src.utils.image_utils import normalize
+from src.utils.image_utils import normalize, synthesis, rotate
 
 
 def fill_outer_matrix(image, mask_side):
@@ -54,6 +54,11 @@ def prewitt_horizontal_mask(img):
     mask = [[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]]
     return apply_mask_img(img, mask, -3*255, 3*255)
 
+def prewitt_detector(img):
+    hor = prewitt_horizontal_mask(img)
+    ver = prewitt_vertical_mask(img)
+    return synthesis(hor, ver)
+
 
 def sobel_vertical_mask(img):
     mask = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
@@ -63,6 +68,53 @@ def sobel_vertical_mask(img):
 def sobel_horizontal_mask(img):
     mask = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
     return apply_mask_img(img, mask, -4*255, 4*255)
+
+
+def sobel_detector(img):
+    hor = sobel_horizontal_mask(img)
+    ver = sobel_vertical_mask(img)
+    return synthesis(hor, ver)
+
+
+def laplacian_detector(img, threshold=0):
+    mask = [[0, -1, 0], [-1, 4, -1], [0, -1, 0]]
+    new_img = apply_mask_img(img, mask, -4*255, 4*255, normalize_result=False)
+    return cross_by_zero(new_img, threshold)
+
+
+def laplacian_o_gauss_detector(img, deviation, threshold):
+    mask = get_laplacian_o_gauss_mask(deviation)
+    new_img = apply_mask_img(img, mask, 0, 0, normalize_result=False)  # no normalizar => no me importa el min y max
+    return cross_by_zero(new_img, threshold)
+
+
+def get_laplacian_o_gauss_mask(deviation):
+    mask_side = 4*int(np.ceil(deviation)) + 1
+    mask = np.zeros((mask_side, mask_side))
+    for i in range(0, len(mask)):
+        y = i - mask_side//2
+        for j in range(0, len(mask[0])):
+            x = j - mask_side//2
+            mask[i][j] = laplacian_o_gauss(x, y, deviation)
+    return mask
+
+
+def laplacian_o_gauss(x, y, deviation):
+    factor1 = -1/(np.sqrt(2 * np.pi) * deviation ** 3)
+    aux = (x**2 + y**2)/deviation**2
+    factor2 = 2 - aux
+    factor3 = np.exp(-aux/2)
+    return factor1 * factor2 * factor3
+
+def directional_detector(img, direction):
+    mask = [[1, 1, 1], [1, -2, 1], [-1, -1, -1]]
+    if direction == 45:
+        mask = rotate(mask, 1)
+    elif direction == 0:
+        mask = rotate(mask, 2)
+    elif direction == 135:
+        mask = rotate(mask, 7)
+    return apply_mask_img(img, mask, -5 * 255, 5 * 255)
 
 
 def weighted_median_filter(img, mask=None):
@@ -83,10 +135,10 @@ def weighted_median_filter(img, mask=None):
     return new_img
 
 
-def apply_mask_img(img, mask, min_val, max_val):
+def apply_mask_img(img, mask, min_val, max_val, normalize_result=True):
     mask_side = len(mask)
     new_img = copy(img)
-    new_img = new_img.astype(np.int64)
+    new_img = new_img.astype(np.double)
     aux_img = fill_outer_matrix(img, mask_side)
     for i in range(0, len(img)):
         end_aux_col = i + mask_side
@@ -97,7 +149,8 @@ def apply_mask_img(img, mask, min_val, max_val):
                     new_img[i][j][k] = apply_mask_frame(aux_img[i: end_aux_col, j: end_aux_row, k], mask)
             else:
                 new_img[i][j] = apply_mask_frame(aux_img[i: end_aux_col, j: end_aux_row], mask)
-    new_img = normalize(new_img, min_val, max_val)
+    if normalize_result:
+        new_img = normalize(new_img, min_val, max_val)
     return new_img
 
 
@@ -200,3 +253,24 @@ def weighted_mean_cells_qty(frame, mask):
         for j in range(0, len(frame_aux[0])):
             accum += mask[i][j] * frame_aux[i][j]
     return accum / (len(mask) * len(mask[0]))
+
+def cross_by_zero(img, threshold=0):
+    new_img = np.zeros(img.shape)
+    for i in range(0, len(img)):
+        for j in range(0, len(img[0]) - 1):
+            if len(img.shape) > 2:
+                for k in range(0, len(img[0][0])):
+                    if img[i][j][k] * img[i][j + 1][k] < 0:  # casos (-+) o (+-)
+                        if abs(img[i][j][k] - img[i][j + 1][k]) > threshold:
+                            new_img[i][j][k] = 255
+                    elif img[i][j][k] == 0 and j != 0 and img[i][j - 1][k] * img[i][j + 1][k] < 0:  # casos (-0+) o (+0-)
+                        if abs(img[i][j - 1][k] - img[i][j + 1][k]) > threshold:
+                            new_img[i][j][k] = 255
+            else:
+                if img[i][j] * img[i][j+1] < 0:  # casos (-+) o (+-)
+                    if abs(img[i][j] - img[i][j+1]) > threshold:
+                        new_img[i][j] = 255
+                elif img[i][j] == 0 and j != 0 and img[i][j-1] * img[i][j+1] < 0:  # casos (-0+) o (+0-)
+                    if abs(img[i][j-1] - img[i][j+1]) > threshold:
+                        new_img[i][j] = 255
+    return new_img.astype(np.uint8)

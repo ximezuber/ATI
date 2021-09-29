@@ -56,19 +56,28 @@ class MainWindow:
                                ('Gaussian mean filter', self.gaussian_filter),
                                ('Weighted median filter', self.weighted_median_filter),
                                ('Border filter', self.border_filter),
-                               None,
-                               ('Prewitt vertical filter', self.prewitt_vertical_filter),
-                               ('Prewitt horizontal filter', self.prewitt_horizontal_filter),
-                               ('Sobel vertical filter', self.sobel_vertical_filter),
-                               ('Sobel horizontal filter', self.sobel_horizontal_filter),
-                               None,
-                               ('Isotropic difussion', self.isotropic_difussion)]
+                              None,
+                              ('Isotropic difussion', self.isotropic_difussion)]
+
+        border_detectors_menu_options = [('Prewitt', self.prewitt_detector),
+                                         ('Sobel', self.sobel_detector),
+                                         ('Directional', self.directional_detector),
+                                         ('Laplacian', self.laplacian_detector),
+                                         ('Laplacian with threshold', self.laplacian_detector_with_threshold),
+                                         ('LoG', self.laplacian_o_gauss_detector),
+                                         None,
+                                         ('Prewitt (vertical)', self.prewitt_vertical_filter),
+                                         ('Prewitt (horizontal)', self.prewitt_horizontal_filter),
+                                         None,
+                                         ('Sobel (vertical)', self.sobel_vertical_filter),
+                                         ('Sobel (horizontal)', self.sobel_horizontal_filter)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
                         'Advanced': advanced_menu_options,
                         "Noise": noise_menu_options,
-                        "Filter": filter_menu_options}
+                        "Filter": filter_menu_options,
+                        "Border Detector": border_detectors_menu_options}
 
         for option in menu_options.keys():
             self._add_to_menu(option, menu_options[option])
@@ -467,6 +476,16 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
+    def prewitt_detector(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            new_img = prewitt_detector(img)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
 
     def sobel_vertical_filter(self):
         if len(self.windows) == 0:
@@ -491,6 +510,63 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
+    def sobel_detector(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            new_img = sobel_detector(img)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    def directional_detector(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            dir = self.select_direction()
+            new_img = directional_detector(img, dir)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    def laplacian_detector(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            new_img = laplacian_detector(img)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    def laplacian_detector_with_threshold(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            threshold = self.ask_for_threshold()
+            new_img = laplacian_detector(img, threshold)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    def laplacian_o_gauss_detector(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            deviation, threshold = self.ask_for_deviation_and_threshold()
+            new_img = laplacian_o_gauss_detector(img, deviation, threshold)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
 
     def isotropic_difussion(self):
         if len(self.windows) == 0:
@@ -920,7 +996,6 @@ class MainWindow:
         window.destroy()
         return std
 
-
     @staticmethod
     def ask_isotropic_args():
         window = Toplevel()
@@ -943,3 +1018,62 @@ class MainWindow:
         window.destroy()
 
         return t
+
+    @staticmethod
+    def select_direction():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Select Direction").grid(row=0, column=0, columnspan=3)
+
+        clicked = StringVar()
+        options = ["Horizontal", "45º", "Vertical", "135º"]
+
+        clicked.set(options[0])
+
+        op_menu = OptionMenu(frame, clicked, *options)
+        op_menu.grid(row=1, column=0, columnspan=2)
+
+        dir_var = StringVar()
+        Button(frame, text="Select", command=(lambda: dir_var.set(clicked.get()))).grid(row=1, column=2)
+        frame.wait_variable(dir_var)
+        dir_val = dir_var.get()
+        if dir_val == "Horizontal":
+            dir_val = 0
+        elif dir_val == "45º":
+            dir_val = 45
+        elif dir_val == "Vertical":
+            dir_val = 90
+        elif dir_val == "135º":
+            dir_val = 135
+        window.destroy()
+        return dir_val
+
+    @staticmethod
+    def ask_for_deviation_and_threshold():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter deviation:").grid(row=0, column=0)
+        deviation_entry = Entry(frame, width=10)
+        deviation_entry.grid(row=1, column=0)
+
+        Label(frame, text="Enter threshold:").grid(row=0, column=1)
+        threshold_entry = Entry(frame, width=10)
+        threshold_entry.grid(row=1, column=1)
+
+        deviation_var = DoubleVar()
+        threshold_var = IntVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (deviation_var.set(float(deviation_entry.get())),
+                                     threshold_var.set(int(threshold_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=2)
+
+        frame.wait_variable(threshold_var)
+        deviation, threshold = deviation_var.get(), threshold_var.get()
+        window.destroy()
+        return deviation, threshold
+

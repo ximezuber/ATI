@@ -286,3 +286,57 @@ def equalize(image):
                 new_image[y, x] = equalized[current_value]
         return new_image.astype(np.uint8)
 
+
+def synthesis(img1, img2):
+    img1 = img1.astype(np.uint64)
+    img2 = img2.astype(np.uint64)
+    new_img = np.sqrt(img1 ** 2 + img2 ** 2)
+    new_img = normalize(new_img, 0, 361)  # sqrt(255^2 + 255^2) = 361
+    return new_img
+
+
+def rotate(img, times_clockwise):
+    for time in range(0, times_clockwise):
+        top = 0
+        bottom = len(img) - 1
+        left = 0
+        right = len(img[0]) - 1
+        while left < right and top < bottom:
+            # Store the first element of next row,
+            # this element will replace first element of
+            # current row
+            prev = img[top + 1][left]
+
+            # Move elements of top row one step right
+            for i in range(left, right + 1):
+                curr = img[top][i]
+                img[top][i] = prev
+                prev = curr
+
+            top += 1
+
+            # Move elements of rightmost column one step downwards
+            for i in range(top, bottom + 1):
+                curr = img[i][right]
+                img[i][right] = prev
+                prev = curr
+
+            right -= 1
+
+            # Move elements of bottom row one step left
+            for i in range(right, left - 1, -1):
+                curr = img[bottom][i]
+                img[bottom][i] = prev
+                prev = curr
+
+            bottom -= 1
+
+            # Move elements of leftmost column one step upwards
+            for i in range(bottom, top - 1, -1):
+                curr = img[i][left]
+                img[i][left] = prev
+                prev = curr
+
+            left += 1
+
+    return img
