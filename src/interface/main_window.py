@@ -1,5 +1,6 @@
 from src.utils.mask_utils import *
 from src.utils.noise_utils import *
+from src.utils.filter_utils import *
 from src.interface.image_window import ImageWindow
 from tkinter import *
 from src.utils.image_utils import *
@@ -54,7 +55,9 @@ class MainWindow:
                                ('Median filter', self.median_filter),
                                ('Gaussian mean filter', self.gaussian_filter),
                                ('Weighted median filter', self.weighted_median_filter),
-                               ('Border filter', self.border_filter)]
+                               ('Border filter', self.border_filter),
+                              None,
+                              ('Isotropic difussion', self.isotropic_difussion)]
 
         border_detectors_menu_options = [('Prewitt', self.prewitt_detector),
                                          ('Sobel', self.sobel_detector),
@@ -68,7 +71,6 @@ class MainWindow:
                                          None,
                                          ('Sobel (vertical)', self.sobel_vertical_filter),
                                          ('Sobel (horizontal)', self.sobel_horizontal_filter)]
-
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
@@ -566,6 +568,19 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
+    def isotropic_difussion(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            t = self.ask_isotropic_args()
+            new_img = isotropic_dif(img, t)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+        
+
     # Selection mode
     def select(self):
         if len(self.windows) == 0:
@@ -982,6 +997,29 @@ class MainWindow:
         return std
 
     @staticmethod
+    def ask_isotropic_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+
+        Label(frame, text="Enter time:").grid(row=0, column=1)
+        t_entry = Entry(frame, width=10)
+        t_entry.grid(row=1, column=1)
+
+        t_var = IntVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(lambda: (t_var.set(float(t_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=2)
+
+        frame.wait_variable(t_var)
+        t = t_var.get()
+        window.destroy()
+
+        return t
+
+    @staticmethod
     def select_direction():
         window = Toplevel()
         frame = Frame(window)
@@ -1038,3 +1076,4 @@ class MainWindow:
         deviation, threshold = deviation_var.get(), threshold_var.get()
         window.destroy()
         return deviation, threshold
+
