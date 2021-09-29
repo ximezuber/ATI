@@ -1024,12 +1024,12 @@ class MainWindow:
         threshold_entry = Entry(frame, width=10)
         threshold_entry.grid(row=1, column=1)
 
-        deviation_var = IntVar()
+        deviation_var = DoubleVar()
         threshold_var = IntVar()
         button = Button(frame,
                         text="Enter",
                         command=(
-                            lambda: (deviation_var.set(int(deviation_entry.get())),
+                            lambda: (deviation_var.set(float(deviation_entry.get())),
                                      threshold_var.set(int(threshold_entry.get())))),
                         padx=20)
         button.grid(row=1, column=2)

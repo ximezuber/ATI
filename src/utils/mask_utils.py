@@ -89,7 +89,7 @@ def laplacian_o_gauss_detector(img, deviation, threshold):
 
 
 def get_laplacian_o_gauss_mask(deviation):
-    mask_side = 4*deviation + 1
+    mask_side = 4*int(np.ceil(deviation)) + 1
     mask = np.zeros((mask_side, mask_side))
     for i in range(0, len(mask)):
         y = i - mask_side//2
@@ -138,7 +138,7 @@ def weighted_median_filter(img, mask=None):
 def apply_mask_img(img, mask, min_val, max_val, normalize_result=True):
     mask_side = len(mask)
     new_img = copy(img)
-    new_img = new_img.astype(np.int64)
+    new_img = new_img.astype(np.double)
     aux_img = fill_outer_matrix(img, mask_side)
     for i in range(0, len(img)):
         end_aux_col = i + mask_side
@@ -258,10 +258,19 @@ def cross_by_zero(img, threshold=0):
     new_img = np.zeros(img.shape)
     for i in range(0, len(img)):
         for j in range(0, len(img[0]) - 1):
-            if img[i][j] * img[i][j+1] < 0:  # casos (-+) o (+-)
-                if abs(img[i][j] - img[i][j+1]) > threshold:
-                    new_img[i][j] = 255
-            elif img[i][j] == 0 and j != 0 and img[i][j-1] * img[i][j+1] < 0:  # casos (-0+) o (+0-)
-                if abs(img[i][j-1] - img[i][j+1]) > threshold:
-                    new_img[i][j] = 255
-    return new_img
+            if len(img.shape) > 2:
+                for k in range(0, len(img[0][0])):
+                    if img[i][j][k] * img[i][j + 1][k] < 0:  # casos (-+) o (+-)
+                        if abs(img[i][j][k] - img[i][j + 1][k]) > threshold:
+                            new_img[i][j][k] = 255
+                    elif img[i][j][k] == 0 and j != 0 and img[i][j - 1][k] * img[i][j + 1][k] < 0:  # casos (-0+) o (+0-)
+                        if abs(img[i][j - 1][k] - img[i][j + 1][k]) > threshold:
+                            new_img[i][j][k] = 255
+            else:
+                if img[i][j] * img[i][j+1] < 0:  # casos (-+) o (+-)
+                    if abs(img[i][j] - img[i][j+1]) > threshold:
+                        new_img[i][j] = 255
+                elif img[i][j] == 0 and j != 0 and img[i][j-1] * img[i][j+1] < 0:  # casos (-0+) o (+0-)
+                    if abs(img[i][j-1] - img[i][j+1]) > threshold:
+                        new_img[i][j] = 255
+    return new_img.astype(np.uint8)
