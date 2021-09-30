@@ -1,6 +1,7 @@
 from src.utils.mask_utils import *
 from src.utils.noise_utils import *
 from src.utils.filter_utils import *
+from src.utils.threshold_utils import *
 from src.interface.image_window import ImageWindow
 from tkinter import *
 from src.utils.image_utils import *
@@ -73,12 +74,15 @@ class MainWindow:
                                          ('Sobel (vertical)', self.sobel_vertical_filter),
                                          ('Sobel (horizontal)', self.sobel_horizontal_filter)]
 
+        threshold_menu_option = [('Global', self.globa_thresholding)]
+
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
                         'Advanced': advanced_menu_options,
                         "Noise": noise_menu_options,
                         "Filter": filter_menu_options,
-                        "Border Detector": border_detectors_menu_options}
+                        "Border Detector": border_detectors_menu_options,
+                        'Threshold': threshold_menu_option}
 
         for option in menu_options.keys():
             self._add_to_menu(option, menu_options[option])
@@ -594,6 +598,25 @@ class MainWindow:
             new_img = bilateral_filter(img, r, s, size)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
+
+
+    def globa_thresholding(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            t = 0
+            while(t <= 0 or t >= 255):
+                t = self.ask_for_threshold()
+            real_t = global_threshold(img, t)
+            new_img = thresholding(real_t, img)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+            top = Toplevel()
+            Label(top, text="Threshold: " + str(real_t)).grid(row=0, column=0, columnspan=3)
+            Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
 
     # Selection mode
     def select(self):
