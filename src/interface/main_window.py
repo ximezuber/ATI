@@ -57,7 +57,8 @@ class MainWindow:
                                ('Weighted median filter', self.weighted_median_filter),
                                ('Border filter', self.border_filter),
                               None,
-                              ('Isotropic difussion', self.isotropic_difussion)]
+                              ('Isotropic difussion', self.isotropic_difussion),
+                              ('Bilateral filter', self.bilateral)]
 
         border_detectors_menu_options = [('Prewitt', self.prewitt_detector),
                                          ('Sobel', self.sobel_detector),
@@ -580,6 +581,19 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
         
+    
+    def bilateral(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            s, r = self.ask_sigmas_args()
+            size = self.ask_for_mask_size()
+            new_img = bilateral_filter(img, r, s, size)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
 
     # Selection mode
     def select(self):
@@ -1018,6 +1032,34 @@ class MainWindow:
         window.destroy()
 
         return t
+
+    @staticmethod
+    def ask_sigmas_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter sigma s:").grid(row=0, column=0)
+        s_entry = Entry(frame, width=10)
+        s_entry.grid(row=1, column=0)
+
+        Label(frame, text="Enter sigma r:").grid(row=0, column=1)
+        r_entry = Entry(frame, width=10)
+        r_entry.grid(row=1, column=1)
+
+        s_var = DoubleVar()
+        r_var = IntVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (s_var.set(float(s_entry.get())),
+                                     r_var.set(int(r_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=2)
+
+        frame.wait_variable(r_var)
+        s, r = s_var.get(), r_var.get()
+        window.destroy()
+        return s, r
 
     @staticmethod
     def select_direction():
