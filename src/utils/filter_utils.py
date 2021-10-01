@@ -26,7 +26,6 @@ def isotropic_dif(img, t):
     return normalize(new_img, 0,  weighted_mean(255*np.ones(mask.shape), mask))
 
 
-
 def gaussian_conv(t):
     mask_side = 7
     mask = np.ones((mask_side, mask_side))
@@ -38,6 +37,43 @@ def gaussian_conv(t):
 
     return mask
     
+
+def anisotropic_diff(img, sigma, t_final, lam=0.25):
+    new_img = copy(img).astype(float)
+    aux_img = copy(img).astype(float)
+
+    for t in range(0, t_final):
+        for i in range(1, len(img) - 1):
+            for j in range(1, len(img[0]) - 1):
+                if len(img.shape) > 2:
+                    for k in range(0, len(img[0][0])):
+                        dn = aux_img[i + 1][j][k] - aux_img[i][j][k]
+                        ds = aux_img[i - 1][j][k] - aux_img[i][j][k]
+                        de = aux_img[i][j + 1][k] - aux_img[i][j][k]
+                        dw = aux_img[i][j - 1][k] - aux_img[i][j][k]
+                        cn = lorentz(dn, sigma)
+                        cs = lorentz(ds, sigma)
+                        ce = lorentz(de, sigma)
+                        cw = lorentz(dw, sigma)
+                        new_img[i][j][k] = aux_img[i][j][k] + lam * (dn * cn + ds * cs + de * ce + dw * cw)
+                else:
+                    dn = aux_img[i + 1][j] - aux_img[i][j]
+                    ds = aux_img[i - 1][j] - aux_img[i][j]
+                    de = aux_img[i][j + 1] - aux_img[i][j]
+                    dw = aux_img[i][j - 1] - aux_img[i][j]
+                    cn = lorentz(dn, sigma)
+                    cs = lorentz(ds, sigma)
+                    ce = lorentz(de, sigma)
+                    cw = lorentz(dw, sigma)
+                    new_img[i][j] = aux_img[i][j] + lam * (dn * cn + ds * cs + de * ce + dw * cw)
+        aux_img = copy(new_img)
+    
+    return normalize(new_img, new_img.min(), new_img.max())
+
+def lorentz(x, sigma):
+    a = (x**2/sigma**2) + 1
+    return 1 / a
+
 
 def bilateral_filter(img, r, s, size, normalize_result = True):
     new_img = copy(img).astype(uint32)

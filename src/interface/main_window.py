@@ -59,6 +59,7 @@ class MainWindow:
                                ('Border filter', self.border_filter),
                               None,
                               ('Isotropic difussion', self.isotropic_difussion),
+                              ('Anisotropic difussion', self.anisotropic_difussion),
                               ('Bilateral filter', self.bilateral)]
 
         border_detectors_menu_options = [('Prewitt', self.prewitt_detector),
@@ -587,6 +588,19 @@ class MainWindow:
             self.unsaved_imgs[window.title] = window.img
         
     
+    def anisotropic_difussion(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            t, sigma = self.ask_anisotropic_args()
+            new_img = anisotropic_diff(img, sigma, t)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+
     def bilateral(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -1089,6 +1103,34 @@ class MainWindow:
         return t
 
     @staticmethod
+    def ask_anisotropic_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter time:").grid(row=0, column=0)
+        t_entry = Entry(frame, width=10)
+        t_entry.grid(row=1, column=0)
+
+        Label(frame, text="Enter sigma:").grid(row=0, column=1)
+        sigma_entry = Entry(frame, width=10)
+        sigma_entry.grid(row=1, column=1)
+
+        t_var = IntVar()
+        sigma_var = DoubleVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (t_var.set(float(t_entry.get())),
+                                     sigma_var.set(int(sigma_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=2)
+
+        frame.wait_variable(sigma_var)
+        t, sigma = t_var.get(), sigma_var.get()
+        window.destroy()
+        return t, sigma
+
+    @staticmethod
     def ask_sigmas_args():
         window = Toplevel()
         frame = Frame(window)
@@ -1102,7 +1144,7 @@ class MainWindow:
         r_entry.grid(row=1, column=1)
 
         s_var = DoubleVar()
-        r_var = IntVar()
+        r_var = DoubleVar()
         button = Button(frame,
                         text="Enter",
                         command=(
