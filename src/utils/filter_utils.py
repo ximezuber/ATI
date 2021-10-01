@@ -17,7 +17,6 @@ def isotropic_dif(img, t):
             new_img[:, :, dim] = convolution
     else:
         new_img = ndimage.convolve(new_img, mask)
-    print(mask)
     return normalize(new_img, 0,  weighted_mean(255*np.ones(mask.shape), mask))
 
 
