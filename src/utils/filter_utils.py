@@ -13,28 +13,23 @@ def isotropic_dif(img, t):
 
     if len(img.shape) > 2:
         for dim in range(img.shape[-1]):
-                convolution = ndimage.convolve(
-                    new_img[:, :, dim], mask, mode="constant", cval=0.0
-                )
-                new_img[:, :, dim] = convolution
+            convolution = ndimage.convolve(new_img[:, :, dim], mask)
+            new_img[:, :, dim] = convolution
     else:
-        new_img = ndimage.convolve(
-                    new_img, mask, mode="constant", cval=0.0
-                )
-                
-
+        new_img = ndimage.convolve(new_img, mask)
+    print(mask)
     return normalize(new_img, 0,  weighted_mean(255*np.ones(mask.shape), mask))
 
 
-
 def gaussian_conv(t):
-    mask_side = 7
+    mask_side = 2*t + 1
     mask = np.ones((mask_side, mask_side))
 
-    
-    for i in range(-3, 3):
-        for j in range(-3, 3):
-            mask[3 + i][3 + j] = (((4 * pi * t) ** (-1)) * np.exp(-(i**2 + j**2) / (4 * t)))
+    for i in range(0, mask_side):
+        y = i - mask_side//2
+        for j in range(0, mask_side):
+            x = j - mask_side//2
+            mask[i][j] = 1/(4 * pi * t) * np.exp(-(x**2 + y**2) / (4 * t))
 
     return mask
     
