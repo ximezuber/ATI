@@ -230,6 +230,21 @@ def thresholding(threshold, img):
                         new_img[w, h, c] = 255
     return new_img
 
+def thresholding_color(threshold, img):
+    new_img = np.copy(img)
+    height = img.shape[1]
+    width = img.shape[0]
+    channels = img.shape[2]
+    
+    for c in range(0, channels):
+        for w in range(0, width):
+            for h in range(0, height):
+
+                if new_img[w, h, c] < threshold[c]:
+                    new_img[w, h, c] = 0
+                else:
+                    new_img[w, h, c] = 255
+    return new_img
 
 def power(img, gamma):
     max_pixel_value = 256

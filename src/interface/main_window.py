@@ -74,7 +74,8 @@ class MainWindow:
                                          ('Sobel (vertical)', self.sobel_vertical_filter),
                                          ('Sobel (horizontal)', self.sobel_horizontal_filter)]
 
-        threshold_menu_option = [('Global', self.globa_thresholding)]
+        threshold_menu_option = [('Global', self.global_thresholding),
+                                ("Otsu", self.otsu_thresholding)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
@@ -600,7 +601,7 @@ class MainWindow:
             self.unsaved_imgs[window.title] = window.img
 
 
-    def globa_thresholding(self):
+    def global_thresholding(self):
         if len(self.windows) == 0:
             window = Toplevel()
             Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
@@ -610,13 +611,44 @@ class MainWindow:
             t = 0
             while(t <= 0 or t >= 255):
                 t = self.ask_for_threshold()
-            real_t = global_threshold(img, t)
-            new_img = thresholding(real_t, img)
+            if len(img.shape) > 2:
+                real_t = np.zeros(len(img[0][0]))
+                for k in range(0, len(img[0][0])):
+                    real_t[k] = global_threshold(img[:, :, k], t)
+                new_img = thresholding_color(real_t, img)
+            else:   
+                real_t = global_threshold(img, t)
+                new_img = thresholding(real_t, img)
+
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
             top = Toplevel()
             Label(top, text="Threshold: " + str(real_t)).grid(row=0, column=0, columnspan=3)
             Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
+
+
+    def otsu_thresholding(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            if len(img.shape) > 2:
+                real_t = np.zeros(len(img[0][0]))
+                for k in range(0, len(img[0][0])):
+                    real_t[k] = otsu_threshold(img[:, :, k])
+                new_img = thresholding_color(real_t, img)
+            else:   
+                real_t = otsu_threshold(img)
+                new_img = thresholding(real_t, img)
+
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+            top = Toplevel()
+            Label(top, text="Threshold: " + str(real_t)).grid(row=0, column=0, columnspan=3)
+            Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
+
 
     # Selection mode
     def select(self):
