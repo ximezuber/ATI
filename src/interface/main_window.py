@@ -2,6 +2,7 @@ from src.utils.mask_utils import *
 from src.utils.noise_utils import *
 from src.utils.filter_utils import *
 from src.utils.threshold_utils import *
+from src.utils.borders_utils import *
 from src.interface.image_window import ImageWindow
 from tkinter import *
 from src.utils.image_utils import *
@@ -73,7 +74,9 @@ class MainWindow:
                                          ('Prewitt (horizontal)', self.prewitt_horizontal_filter),
                                          None,
                                          ('Sobel (vertical)', self.sobel_vertical_filter),
-                                         ('Sobel (horizontal)', self.sobel_horizontal_filter)]
+                                         ('Sobel (horizontal)', self.sobel_horizontal_filter),
+                                         None,
+                                         ('S.U.S.A.N.', self.susan_border)]
 
         threshold_menu_option = [('Global', self.global_thresholding),
                                 ("Otsu", self.otsu_thresholding)]
@@ -664,6 +667,26 @@ class MainWindow:
             Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
 
 
+    def susan_border(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            t, together = self.ask_susan_args()
+            if together:
+                new_img = susan_filter_together(img, t)
+                window = ImageWindow(self, new_img)
+                self.unsaved_imgs[window.title] = window.img
+            else:
+                border_img, corner_img = susan_filter_apart(img, t)
+                window1 = ImageWindow(self, border_img)
+                window2 = ImageWindow(self, corner_img)
+                self.unsaved_imgs[window1.title] = window1.img
+                self.unsaved_imgs[window2.title] = window2.img
+
+
     # Selection mode
     def select(self):
         if len(self.windows) == 0:
@@ -1216,3 +1239,40 @@ class MainWindow:
         window.destroy()
         return deviation, threshold
 
+    
+    @staticmethod
+    def ask_susan_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+
+        Label(frame, text="Enter t:").grid(row=0, column=1)
+        t_entry = Entry(frame, width=10)
+        t_entry.grid(row=1, column=1)
+
+        t_var = IntVar()
+        together_var = BooleanVar()
+
+        Label(frame, text="Borders and corners on").grid(row=0, column=2)
+        button_together = Button(frame,
+                        text="Same Image",
+                        command=(
+                            lambda: (t_var.set(float(t_entry.get())),
+                                     together_var.set(True))),
+                        padx=20)
+        button_together.grid(row=1, column=2)
+
+        button_separate = Button(frame,
+                        text="Separate Images",
+                        command=(
+                            lambda: (t_var.set(float(t_entry.get())),
+                                     together_var.set(False))),
+                        padx=20)
+        button_separate.grid(row=2, column=2)
+
+        frame.wait_variable(t_var)
+        t = t_var.get()
+        together = together_var.get()
+        window.destroy()
+
+        return t, together
