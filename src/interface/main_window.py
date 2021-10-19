@@ -76,6 +76,7 @@ class MainWindow:
                                          ('Sobel (vertical)', self.sobel_vertical_filter),
                                          ('Sobel (horizontal)', self.sobel_horizontal_filter),
                                          None,
+                                         ('Canny', self.canny_border),
                                          ('S.U.S.A.N.', self.susan_border)]
 
         threshold_menu_option = [('Global', self.global_thresholding),
@@ -687,6 +688,18 @@ class MainWindow:
                 self.unsaved_imgs[window2.title] = window2.img
 
 
+    def canny_border(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            t1, t2 = self.ask_canny_args()
+            new_img = canny(img, t1, t2)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
     # Selection mode
     def select(self):
         if len(self.windows) == 0:
@@ -1276,3 +1289,30 @@ class MainWindow:
         window.destroy()
 
         return t, together
+
+    def ask_canny_args(self):
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter t1:").grid(row=0, column=0)
+        t1_entry = Entry(frame, width=10)
+        t1_entry.grid(row=1, column=0)
+
+        Label(frame, text="Enter t2:").grid(row=0, column=1)
+        t2_entry = Entry(frame, width=10)
+        t2_entry.grid(row=1, column=1)
+
+        t1_var = DoubleVar()
+        t2_var = DoubleVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (t1_var.set(float(t1_entry.get())),
+                                     t2_var.set(float(t2_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=2)
+
+        frame.wait_variable(t2_var)
+        t1, t2 = t1_var.get(), t2_var.get()
+        window.destroy()
+        return t1, t2

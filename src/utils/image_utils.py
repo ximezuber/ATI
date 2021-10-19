@@ -302,11 +302,12 @@ def equalize(image):
         return new_image.astype(np.uint8)
 
 
-def synthesis(img1, img2):
-    img1 = img1.astype(np.uint64)
-    img2 = img2.astype(np.uint64)
+def synthesis(img1, img2, normalize_out=True):
+    img1 = img1.astype(np.int64)
+    img2 = img2.astype(np.int64)
     new_img = np.sqrt(img1 ** 2 + img2 ** 2)
-    new_img = normalize(new_img, 0, 361)  # sqrt(255^2 + 255^2) = 361
+    if normalize_out:
+        new_img = normalize(new_img, 0, 361)  # sqrt(255^2 + 255^2) = 361
     return new_img
 
 
