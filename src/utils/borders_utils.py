@@ -67,9 +67,10 @@ def susan(img, t):
             #         corners[i][j] = [255, 0, 0]
             # else:
             s = calculate_s(aux_img[i: end_aux_col, j: end_aux_row], mask, t)
-            if(s > 0.40 and s < 0.60):
+            error_allowed = (0.75 - 0.5) / 2
+            if 0.5 - error_allowed <= s < 0.5 + error_allowed:
                 borders[i][j] = [0, 255, 0]
-            if(s >= 0.60 and s <= 0.80):
+            if 0.5 + error_allowed <= s <= 0.75 + error_allowed:
                 corners[i][j] = [255, 0, 0]
     return borders, corners
 
@@ -156,8 +157,6 @@ def angles_matrix(gx, gy):
             else:
                 angle = math.atan2(gy[i][j], gx[i][j])
                 angle = angle_to_direction(angle)
-                if angle == 135 or angle == 45:
-                    print(i, j, gy[i][j], gx[i][j], gy[i][j] / gx[i][j], angle)
                 angles[i].append(angle)
     return angles
 
