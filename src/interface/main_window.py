@@ -1,3 +1,8 @@
+import os
+import time
+
+from PIL import ImageTk
+
 from src.utils.mask_utils import *
 from src.utils.noise_utils import *
 from src.utils.filter_utils import *
@@ -77,7 +82,9 @@ class MainWindow:
                                          ('Sobel (horizontal)', self.sobel_horizontal_filter),
                                          None,
                                          ('Canny', self.canny_border),
-                                         ('S.U.S.A.N.', self.susan_border)]
+                                         ('S.U.S.A.N.', self.susan_border),
+                                         ('Active Contours', self.active_contours),
+                                         ('Active Contours video', self.active_contours_video)]
 
         threshold_menu_option = [('Global', self.global_thresholding),
                                 ("Otsu", self.otsu_thresholding)]
@@ -700,7 +707,43 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
-    # Selection mode
+    def active_contours(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img_window = self.select_window()
+            img = img_window.img
+            copy_window = ImageWindow(self, copy(img))
+            left, up, right, down = self.get_selection(copy_window)
+            epsilon, max_iterations = self.ask_active_contours_args()
+            _, mean = pixels_info(img[up:down + 1, left:right + 1])
+            new_img = active_contours(img, left, up, right, down, mean, epsilon, max_iterations)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    def active_contours_video(self):
+        imgs = self.select_video()
+        showing_img_window = ImageWindow(self, imgs[0])
+        first_img = showing_img_window.img
+        left, up, right, down = self.get_selection(showing_img_window)
+        epsilon, max_iterations = self.ask_active_contours_args()
+        _, mean = pixels_info(first_img[up:down + 1, left:right + 1])
+        prev_curve, lin, lout = initialize_marks(first_img, left, up, right, down)
+        showing_img_window = ImageWindow(self, imgs[0])
+        self.root.after(10, self.update_active_contours_video, imgs, 0, prev_curve, lin, lout, mean, epsilon, max_iterations,
+                        showing_img_window)
+
+    def update_active_contours_video(self, imgs, current_i, prev_curve, lin, lout, mean, epsilon, max_iterations, window):
+        img = imgs[current_i]
+        new_img, prev_curve, lin, lout = active_contours_vid(img, prev_curve, lin, lout, mean, epsilon, max_iterations)
+        window.change_image(new_img)
+        if current_i < len(imgs) - 1:
+            self.root.after(10, self.update_active_contours_video, imgs, current_i + 1, prev_curve, lin, lout, mean,
+                            epsilon, max_iterations, window)
+
+            # Selection mode
     def select(self):
         if len(self.windows) == 0:
             top = Toplevel()
@@ -1290,7 +1333,8 @@ class MainWindow:
 
         return t, together
 
-    def ask_canny_args(self):
+    @staticmethod
+    def ask_canny_args():
         window = Toplevel()
         frame = Frame(window)
         frame.pack()
@@ -1316,3 +1360,55 @@ class MainWindow:
         t1, t2 = t1_var.get(), t2_var.get()
         window.destroy()
         return t1, t2
+
+    @staticmethod
+    def ask_active_contours_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter epsilon:").grid(row=0, column=0)
+        e_entry = Entry(frame, width=10)
+        e_entry.grid(row=1, column=0)
+
+        Label(frame, text="Enter max iterations:").grid(row=0, column=1)
+        max_entry = Entry(frame, width=10)
+        max_entry.grid(row=1, column=1)
+
+        e_var = IntVar()
+        max_var = IntVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (e_var.set(int(e_entry.get())),
+                                     max_var.set(int(max_entry.get())))),
+                        padx=20)
+        button.grid(row=1, column=2)
+
+        frame.wait_variable(max_var)
+        epsilon, max_iterations = e_var.get(), max_var.get()
+        window.destroy()
+        return epsilon, max_iterations
+
+    @staticmethod
+    def get_selection(img):
+        return img.selection_mode(select_only=True)
+
+
+    def select_video(self):
+        filenames = self.select_folder()
+        imgs = []
+        for filename in filenames:
+            imgs.append(load(filename))
+        return imgs
+
+    def select_folder(self):
+        d = filedialog.askdirectory(initialdir="./videos")
+        files = os.listdir(d)
+        for i, file in enumerate(copy(files)):
+            files[i] = os.path.join(d, file)
+        files.sort(key=self.sort_files)
+        return files
+
+    @staticmethod
+    def sort_files(s):
+        return len(s), s
