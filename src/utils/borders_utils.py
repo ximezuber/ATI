@@ -223,7 +223,6 @@ def active_contours_vid(img, marks, lin, lout, avg_obj_color, epsilon, max_itera
     return new_img.astype(uint8), marks, lin, lout
 
 
-# TODO: Creo que hay un error cuando toca contraer, linea 234 en adelante
 def active_contours_iteration(img, avg_obj_color, epsilon, marks, lout, lin, lout_mark, lin_mark, obj_mark, bg_mark):
     expand_curve(img, avg_obj_color, epsilon, marks, lout, lin, lin_mark, lout_mark, bg_mark)
     aux_lin = list(lin)
@@ -240,13 +239,13 @@ def active_contours_iteration(img, avg_obj_color, epsilon, marks, lout, lin, lou
 
 
 def fd(pixel_color, avg_obj_color, epsilon):
-    if pixel_color.shape[0] == 3:
-        if np.linalg.norm(pixel_color - avg_obj_color) < epsilon:
+    if isinstance(pixel_color, int):
+        if abs(pixel_color - avg_obj_color) < epsilon:
             return 1
         else:
             return -1
     else:
-        if abs(pixel_color - avg_obj_color) < epsilon:
+        if np.linalg.norm(pixel_color - avg_obj_color) < epsilon:
             return 1
         else:
             return -1
@@ -311,7 +310,6 @@ def initialize_marks(img, left, up, right, down, obj_mark=-3, lin_mark=-1, lout_
 
 def expand_curve(img, avg_obj_color, epsilon, marks, lout, lin, lin_mark, lout_mark, bg_mark):
     aux_lout = list(lout)
-
     for pixel in aux_lout:
         if fd(img[pixel[0]][pixel[1]], avg_obj_color, epsilon) > 0:
             lout.remove(tuple(pixel))
@@ -342,15 +340,7 @@ def contract_curve(img, avg_obj_color, epsilon, marks, lout, lin, lin_mark, lout
             lin.remove(tuple(pixel))
             lout.add(tuple(pixel))
             marks[pixel[0]][pixel[1]] = lout_mark
-            if pixel[1] + 1 < len(marks):
-                if marks[pixel[0]][pixel[1] - 1] == obj_mark:
-                    marks[pixel[0]][pixel[1] - 1] = lin_mark
-                    lin.add((pixel[0], pixel[1] + 1))
-            if pixel[1] - 1 >= 0:
-                if marks[pixel[0]][pixel[1] - 1] == obj_mark:
-                    marks[pixel[0]][pixel[1] - 1] = lin_mark
-                    lin.add((pixel[0], pixel[1] - 1))
-            if pixel[0] + 1 < len(marks[0]):
+            if pixel[0] + 1 < len(marks):
                 if marks[pixel[0] + 1][pixel[1]] == obj_mark:
                     marks[pixel[0] + 1][pixel[1]] = lin_mark
                     lin.add((pixel[0] + 1, pixel[1]))
@@ -358,6 +348,14 @@ def contract_curve(img, avg_obj_color, epsilon, marks, lout, lin, lin_mark, lout
                 if marks[pixel[0] - 1][pixel[1]] == obj_mark:
                     marks[pixel[0] - 1][pixel[1]] = lin_mark
                     lin.add((pixel[0] - 1, pixel[1]))
+            if pixel[1] + 1 < len(marks[0]):
+                if marks[pixel[0]][pixel[1] + 1] == obj_mark:
+                    marks[pixel[0]][pixel[1] + 1] = lin_mark
+                    lin.add((pixel[0], pixel[1] + 1))
+            if pixel[1] - 1 >= 0:
+                if marks[pixel[0]][pixel[1] - 1] == obj_mark:
+                    marks[pixel[0]][pixel[1] - 1] = lin_mark
+                    lin.add((pixel[0], pixel[1] - 1))
 
 
 def has_finished_active_contours(img, avg_obj_color, epsilon, lin, lout):

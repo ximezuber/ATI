@@ -48,7 +48,6 @@ def bin_circle(radius=50, img_height=200, img_width=200):
     ellipse_shape = (img_width / 2 - radius, img_height / 2 - radius, img_width / 2 + radius, img_height / 2 + radius)
     draw.ellipse(ellipse_shape, fill="white")
     return img
-    # img.save('circle.jpg', quality=95)  # TODO: check extension
 
 
 def bin_rectangle(hor_len=150, ver_len=150, img_height=200, img_width=200):
@@ -58,7 +57,6 @@ def bin_rectangle(hor_len=150, ver_len=150, img_height=200, img_width=200):
                        (img_width / 2 + hor_len / 2, img_height / 2 + ver_len / 2))
     draw.rectangle(rectangle_shape, fill="white")
     return img
-    # img.save('rectangle.jpg', quality=95)  # TODO: check extension
 
 
 def add(im1, im2):
