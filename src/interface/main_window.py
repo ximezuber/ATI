@@ -83,6 +83,7 @@ class MainWindow:
                                          None,
                                          ('Canny', self.canny_border),
                                          ('S.U.S.A.N.', self.susan_border),
+                                         ('Hough Transformation', self.hough_transformation),
                                          ('Active Contours', self.active_contours),
                                          ('Active Contours video', self.active_contours_video)]
 
@@ -707,6 +708,7 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
+
     def active_contours(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -723,6 +725,7 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
+
     def active_contours_video(self):
         imgs = self.select_video()
         showing_img_window = ImageWindow(self, imgs[0])
@@ -735,6 +738,7 @@ class MainWindow:
         self.root.after(10, self.update_active_contours_video, imgs, 0, prev_curve, lin, lout, mean, epsilon, max_iterations,
                         showing_img_window)
 
+
     def update_active_contours_video(self, imgs, current_i, prev_curve, lin, lout, mean, epsilon, max_iterations, window):
         img = imgs[current_i]
         new_img, prev_curve, lin, lout = active_contours_vid(img, prev_curve, lin, lout, mean, epsilon, max_iterations)
@@ -743,7 +747,22 @@ class MainWindow:
             self.root.after(10, self.update_active_contours_video, imgs, current_i + 1, prev_curve, lin, lout, mean,
                             epsilon, max_iterations, window)
 
-            # Selection mode
+    
+    def hough_transformation(self):
+        if len(self.windows) == 0:
+            window = Toplevel()
+            Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            img = self.select_img_from_windows()
+            t1, t2 = self.ask_canny_args()
+            epsilon, theta, rho = self.ask_hough_args()
+
+            new_img = hough_linear(img, epsilon, t1, t2, theta, rho)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+    # Selection mode
     def select(self):
         if len(self.windows) == 0:
             top = Toplevel()
@@ -1360,6 +1379,42 @@ class MainWindow:
         t1, t2 = t1_var.get(), t2_var.get()
         window.destroy()
         return t1, t2
+
+    @staticmethod
+    def ask_hough_args():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Enter epsilon:").grid(row=0, column=0)
+        epsilon_entry = Entry(frame, width=10)
+        epsilon_entry.grid(row=1, column=0)
+
+        Label(frame, text="Enter theta step:").grid(row=0, column=1)
+        theta_entry = Entry(frame, width=10)
+        theta_entry.grid(row=1, column=1)
+
+        Label(frame, text="Enter rho step:").grid(row=0, column=2)
+        rho_entry = Entry(frame, width=10)
+        rho_entry.grid(row=1, column=2)
+
+        epsilon_var = DoubleVar()
+        theta_var = DoubleVar()
+        rho_var = DoubleVar()
+
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (epsilon_var.set(float(epsilon_entry.get())),
+                                     theta_var.set(float(theta_entry.get())),
+                                     rho_var.set(float(rho_entry.get())))),
+                                     
+                        padx=20)
+        button.grid(row=1, column=3)
+
+        frame.wait_variable(theta_var)
+        epsilon, theta, rho = epsilon_var.get(), theta_var.get(), rho_var.get()
+        window.destroy()
+        return epsilon, theta, rho
 
     @staticmethod
     def ask_active_contours_args():
