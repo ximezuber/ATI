@@ -7,7 +7,8 @@ from numpy import copy, int32, uint8
 from numpy.core.fromnumeric import nonzero
 
 from src.utils.image_utils import synthesis, normalize
-from src.utils.mask_utils import fill_outer_matrix, sobel_vertical_mask, sobel_horizontal_mask
+from src.utils.mask_utils import fill_outer_matrix, sobel_vertical_mask, sobel_horizontal_mask, prewitt_vertical_mask, \
+    prewitt_horizontal_mask, gaussian_filter
 
 
 def susan_filter_together(img, t):
@@ -237,6 +238,47 @@ def active_contours_iteration(img, avg_obj_color, epsilon, marks, lout, lin, lou
         if not is_touching_lin(pixel, marks, lin_mark):
             marks[pixel[0]][pixel[1]] = bg_mark
             lout.remove(tuple(pixel))
+
+
+def harris(img, threshold):
+    new_img = copy(img)
+    corners = harris_corners(img, threshold)
+    if len(img.shape) < 3:
+        new_img = np.asarray(Image.fromarray(img).convert(mode='RGB'))
+    for i in range(0, len(img)):
+        for j in range(0, len(img[0])):
+            corner = corners[i][j]
+            if corner[0] == 255 and corner[1] == 0 and corner[2] == 0:
+                new_img[i][j] = corner
+    return new_img.astype(uint8)
+
+
+def harris_corners(img, threshold):
+    deviation = 2
+    ix = sobel_horizontal_mask(img, False)
+    iy = sobel_vertical_mask(img, False)
+    ix2 = np.square(ix, dtype=np.float64)
+    ix2 = gaussian_filter(ix2, deviation)
+    iy2 = np.square(iy, dtype=np.float64)
+    iy2 = gaussian_filter(iy2, deviation)
+    ixy = np.multiply(ix, iy, dtype=np.float64)
+    ixy = gaussian_filter(ixy, deviation)
+    trace = ix2 + iy2
+    r = ix2 * iy2 - ixy * ixy - 0.04 * trace * trace
+    corners = np.zeros((img.shape[0], img.shape[1], 3))
+    win_size = 1
+    for i in range(len(r)):
+        min_i = max(0, i - win_size)
+        max_i = min(len(corners), i + win_size)
+        for j in range(len(r[i])):
+            if r[i][j] > threshold:
+                min_j = max(0, j - win_size)
+                max_j = min(len(corners[0]), j + win_size)
+                for win_i in range(min_i, max_i + 1):
+                    for win_j in range(min_j, max_j + 1):
+                        corners[win_i][win_j] = [255, 0, 0]
+
+    return corners.astype(uint8)
 
 
 def fd(pixel_color, avg_obj_color, epsilon):
