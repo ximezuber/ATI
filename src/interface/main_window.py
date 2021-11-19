@@ -8,6 +8,7 @@ from src.utils.noise_utils import *
 from src.utils.filter_utils import *
 from src.utils.threshold_utils import *
 from src.utils.borders_utils import *
+from src.utils.sift_utils import *
 from src.interface.image_window import ImageWindow
 from tkinter import *
 from src.utils.image_utils import *
@@ -93,12 +94,16 @@ class MainWindow:
         threshold_menu_option = [('Global', self.global_thresholding),
                                  ("Otsu", self.otsu_thresholding)]
 
+        object_detectors_options = [('S.I.F.T Key Points', self.key_points),
+                                    ('S.I.F.T', self.sift)]
+
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
                         'Advanced': advanced_menu_options,
                         "Noise": noise_menu_options,
                         "Filter": filter_menu_options,
                         "Border Detector": border_detectors_menu_options,
+                        'Object Detector': object_detectors_options,
                         'Threshold': threshold_menu_option}
 
         for option in menu_options.keys():
@@ -127,14 +132,15 @@ class MainWindow:
                                                          ("pgm", "*.pgm"),
                                                          ("ppm", "*.ppm"),
                                                          ("jpg", "*.jpg"),
-                                                         ("png", "*.png")))
+                                                         ("png", "*.png"),
+                                                         ("jpeg", "*.jpeg")))
         if not filename:
             return
 
         w, h = None, None
         if filename.lower().endswith('.raw'):
             w, h = self.ask_width_and_height()
-        ImageWindow(self, load(filename, w, h))
+        ImageWindow(self, load(filename, w, h), filename)
 
     # Save Image
     def save_image_window(self):
@@ -757,6 +763,7 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
+            
     def harris_corners(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -768,6 +775,45 @@ class MainWindow:
             new_img = harris(img, threshold)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
+
+        
+
+    def key_points(self):
+            filename = self.select_filename_from_windows()
+            new_img = key_points(filename)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+
+    def sift(self):
+        if len(self.windows) < 2:
+            window = Toplevel()
+            Label(window, text="Not enough images, please load at least 2").grid(row=0, column=0, columnspan=3)
+            Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
+        else:
+            filename_1, filename_2 = self.select_filenames_from_windows()
+            n, show = self.ask_for_sift_arg()
+            if 0.0 <= n <= 1.0:
+                new_img, matches, threshold = sift(filename_1, filename_2, n, show)
+                info_window = Toplevel()
+                frame = Frame(info_window)
+                frame.pack()
+                if (matches >= threshold):
+                    Label(frame, text="They are the same image with " + str(matches) + " matches and a threshold of " + str(threshold))\
+                        .grid(row=0, column=0, columnspan=3)
+                    Button(frame, text="Done", command=info_window.destroy, padx=20).grid(row=2, column=1)
+                else:
+                    Label(frame, text="They are not the same image. (Matches: " + str(matches) + ", threshold: " + str(threshold) +  ")")\
+                        .grid(row=0, column=0, columnspan=3)
+                    Button(frame, text="Done", command=info_window.destroy, padx=20).grid(row=2, column=1)
+
+                window = ImageWindow(self, new_img)
+                self.unsaved_imgs[window.title] = window.img
+            else:
+                messagebox.showerror(
+                    title="Error", message="Matches percentege should be between 0 and 1."
+                )
+            
 
     # Selection mode
     def select(self):
@@ -793,6 +839,16 @@ class MainWindow:
         window = self.select_window()
         return window.img
 
+    def select_filenames_from_windows(self):
+            window_1, window_2 = self.select_2_windows()
+            return window_1.filename, window_2.filename
+
+
+    def select_filename_from_windows(self):
+            window = self.select_window()
+            return window.filename
+
+        
     def select_window(self):
         if len(self.windows) == 1:
             return self.windows[0]
@@ -817,6 +873,49 @@ class MainWindow:
         for image_window in self.windows:
             if image_window.title == window_name:
                 return image_window
+    
+
+    def select_2_windows(self):
+        if len(self.windows) == 2:
+            return self.windows[0], self.windows[1]
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+        Label(frame, text="Select 2 images").grid(row=0, column=0, columnspan=3)
+
+        clicked_1 = StringVar()
+        clicked_2 = StringVar()
+
+        options_1 = self.get_windows_titles()
+        options_2 = self.get_windows_titles()
+
+        clicked_1.set(options_1[0])
+        clicked_2.set(options_1[0])
+
+        op_menu_1 = OptionMenu(frame, clicked_1, *options_1)
+        op_menu_1.grid(row=1, column=0, columnspan=2)
+        op_menu_2 = OptionMenu(frame, clicked_2, *options_2)
+        op_menu_2.grid(row=2, column=0, columnspan=2)
+
+
+        window_name_var_1 = StringVar()
+        window_name_var_2 = StringVar()
+
+        Button(frame, text="Select", command= (lambda: (window_name_var_1.set(clicked_1.get()),
+                                    window_name_var_2.set(clicked_2.get())))).grid(row=2, column=2)
+        frame.wait_variable(window_name_var_1)
+        window_name_1 = window_name_var_1.get()
+        window_name_2 = window_name_var_2.get()
+        window.destroy()
+        image_window_1 = None
+        image_window_2 = None
+        for image_window in self.windows:
+            if image_window.title == window_name_1:
+                image_window_1 = image_window
+            if image_window.title == window_name_2:
+                image_window_2 = image_window
+
+        return image_window_1, image_window_2
 
     def select_save_window(self):
         if len(self.unsaved_imgs) == 1:
@@ -1176,6 +1275,37 @@ class MainWindow:
         std = std_var.get()
         window.destroy()
         return std
+
+    @staticmethod
+    def ask_for_sift_arg():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+
+        Label(frame, text="Enter threshold of matches:").grid(row=0, column=1)
+        n_entry = Entry(frame, width=10)
+        n_entry.grid(row=1, column=1)
+
+        Label(frame, text="Enter number of matches to show:").grid(row=2, column=1)
+        show_entry = Entry(frame, width=10)
+        show_entry.grid(row=3, column=1)
+
+        n_var = DoubleVar()
+        show_var = IntVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (n_var.set(float(n_entry.get())),
+                                     show_var.set(int(show_entry.get())))),
+                        padx=20)
+        button.grid(row=3, column=2)
+        
+        frame.wait_variable(n_var)
+        n = n_var.get()
+        show = show_var.get()
+        window.destroy()
+        return n, show
+
 
     @staticmethod
     def ask_isotropic_args():
