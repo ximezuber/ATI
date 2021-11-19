@@ -60,14 +60,14 @@ def prewitt_detector(img):
     return synthesis(hor, ver)
 
 
-def sobel_vertical_mask(img):
+def sobel_vertical_mask(img, normalize_result=True):
     mask = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
-    return apply_mask_img(img, mask, -4*255, 4*255)
+    return apply_mask_img(img, mask, -4*255, 4*255, normalize_result)
 
 
-def sobel_horizontal_mask(img):
+def sobel_horizontal_mask(img, normalize_result=True):
     mask = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
-    return apply_mask_img(img, mask, -4*255, 4*255)
+    return apply_mask_img(img, mask, -4*255, 4*255, normalize_result)
 
 
 def sobel_detector(img):

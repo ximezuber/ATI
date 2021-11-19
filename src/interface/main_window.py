@@ -14,8 +14,8 @@ from tkinter import *
 from src.utils.image_utils import *
 from numpy import copy
 from tkinter import filedialog, messagebox
-from src.utils.random_generator import (GaussianGenerator, 
-                                        RayleighGenerator, 
+from src.utils.random_generator import (GaussianGenerator,
+                                        RayleighGenerator,
                                         ExponentialGenerator)
 
 
@@ -35,6 +35,7 @@ class MainWindow:
                               None,
                               ('Create Circle Image', self.create_circle),
                               ('Create Square Image', self.create_square),
+                              ('Open Test Image', self.open_test),
                               None,
                               ('Exit', self.ask_quit)]
         edit_menu_options = [('Select', self.select),
@@ -42,11 +43,11 @@ class MainWindow:
                              ('Get Pixel', self.get_pixel_value),
                              ('Modify Pixel', self.modify_pixel),
                              None,
-                             ('Add', self.sum_images),  
-                             ('Subtract', self.subtract_images),  
+                             ('Add', self.sum_images),
+                             ('Subtract', self.subtract_images),
                              ('Multiply', self.multiply_images),
-                             None, 
-                             ('Negative', self.image_negative), 
+                             None,
+                             ('Negative', self.image_negative),
                              ("Thresholding", self.image_thresholding),
                              ('Power function', self.power_gamma),
                              ('Equalize', self.equalize)]
@@ -64,10 +65,10 @@ class MainWindow:
                                ('Gaussian mean filter', self.gaussian_filter),
                                ('Weighted median filter', self.weighted_median_filter),
                                ('Border filter', self.border_filter),
-                              None,
-                              ('Isotropic difussion', self.isotropic_difussion),
-                              ('Anisotropic difussion', self.anisotropic_difussion),
-                              ('Bilateral filter', self.bilateral)]
+                               None,
+                               ('Isotropic difussion', self.isotropic_difussion),
+                               ('Anisotropic difussion', self.anisotropic_difussion),
+                               ('Bilateral filter', self.bilateral)]
 
         border_detectors_menu_options = [('Prewitt', self.prewitt_detector),
                                          ('Sobel', self.sobel_detector),
@@ -86,10 +87,12 @@ class MainWindow:
                                          ('S.U.S.A.N.', self.susan_border),
                                          ('Hough Transformation', self.hough_transformation),
                                          ('Active Contours', self.active_contours),
-                                         ('Active Contours video', self.active_contours_video)]
+                                         ('Active Contours video', self.active_contours_video),
+                                         None,
+                                         ('Harris', self.harris_corners)]
 
         threshold_menu_option = [('Global', self.global_thresholding),
-                                ("Otsu", self.otsu_thresholding)]
+                                 ("Otsu", self.otsu_thresholding)]
 
         object_detectors_options = [('S.I.F.T Key Points', self.key_points),
                                     ('S.I.F.T', self.sift)]
@@ -168,6 +171,10 @@ class MainWindow:
         window = ImageWindow(self, np.asarray(bin_rectangle()))
         self.unsaved_imgs[window.title] = window.img
 
+    def open_test(self):
+        window = ImageWindow(self, load('./photos/test_images/pgm/test.pgm'))
+        self.unsaved_imgs[window.title] = window.img
+
     # Get pixel value
     def get_pixel_value(self):
         if len(self.windows) == 0:
@@ -201,47 +208,47 @@ class MainWindow:
             info_window = Toplevel()
             frame = Frame(info_window)
             frame.pack()
-            Label(frame, text="Pixel's value on (" + str(x) + ", " + str(y) + "): " + str(new_value))\
+            Label(frame, text="Pixel's value on (" + str(x) + ", " + str(y) + "): " + str(new_value)) \
                 .grid(row=0, column=0, columnspan=3)
             Button(frame, text="Done", command=info_window.destroy, padx=20).grid(row=2, column=1)
             self.unsaved_imgs[window.title] = window.img
 
     # Add two images
-    def sum_images(self): 
+    def sum_images(self):
         if len(self.windows) == 0:
             window = Toplevel()
             Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
-        else: 
+        else:
             windows = self.select_from_to_windows()
             new_img = add(windows[0].img, windows[1].img)
             img_window = ImageWindow(self, new_img)
             self.unsaved_imgs[img_window.title] = img_window.img
-    
+
     # Subtract two images
-    def subtract_images(self): 
+    def subtract_images(self):
         if len(self.windows) == 0:
             window = Toplevel()
             Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
-        else: 
+        else:
             windows = self.select_from_to_windows()
             new_img = subtract(windows[0].img, windows[1].img)
             img_window = ImageWindow(self, new_img)
             self.unsaved_imgs[img_window.title] = img_window.img
 
     # Multiply two images
-    def multiply_images(self): 
+    def multiply_images(self):
         if len(self.windows) == 0:
             window = Toplevel()
             Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
-        else: 
+        else:
             windows = self.select_from_to_windows()
             new_img = multiply(windows[0].img, windows[1].img)
             img_window = ImageWindow(self, new_img)
             self.unsaved_imgs[img_window.title] = img_window.img
-            
+
     # Get image's negaive        
     def image_negative(self):
         if len(self.windows) == 0:
@@ -254,7 +261,6 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
-    
     def image_thresholding(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -333,14 +339,14 @@ class MainWindow:
         elif dist == "Exponential":
             lam = self.ask_exponential_args()
             plot_gen_hist(ExponentialGenerator(lam, 1000), dist)
-    
+
     # Add Gaussian Noise to image
     def add_gaussian_noise(self):
         if len(self.windows) == 0:
             window = Toplevel()
             Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
-        else: 
+        else:
             img = self.select_img_from_windows()
             threshold = self.ask_for_threshold()
             if 0.0 <= threshold <= 1.0:
@@ -353,7 +359,7 @@ class MainWindow:
                 self.unsaved_imgs[window.title] = window.img
             else:
                 messagebox.showerror(
-                title="Error", message="Threshold should be between 0 and 1."
+                    title="Error", message="Threshold should be between 0 and 1."
                 )
 
     # Add Rayleigh Noise to image
@@ -362,7 +368,7 @@ class MainWindow:
             window = Toplevel()
             Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
-        else: 
+        else:
             img = self.select_img_from_windows()
             threshold = self.ask_for_threshold()
             if 0.0 <= threshold <= 1.0:
@@ -375,7 +381,7 @@ class MainWindow:
                 self.unsaved_imgs[window.title] = window.img
             else:
                 messagebox.showerror(
-                title="Error", message="Threshold should be between 0 and 1."
+                    title="Error", message="Threshold should be between 0 and 1."
                 )
 
     # Add Exponential Noise to image
@@ -384,7 +390,7 @@ class MainWindow:
             window = Toplevel()
             Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
-        else: 
+        else:
             img = self.select_img_from_windows()
             threshold = self.ask_for_threshold()
             if 0.0 <= threshold <= 1.0:
@@ -397,7 +403,7 @@ class MainWindow:
                 self.unsaved_imgs[window.title] = window.img
             else:
                 messagebox.showerror(
-                title="Error", message="Threshold should be between 0 and 1."
+                    title="Error", message="Threshold should be between 0 and 1."
                 )
 
     # Add Salt and Pepper Noise to image
@@ -406,7 +412,7 @@ class MainWindow:
             window = Toplevel()
             Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
-        else: 
+        else:
             img = self.select_img_from_windows()
             threshold = self.ask_for_threshold()
             if 0.0 <= threshold <= 1.0:
@@ -415,7 +421,7 @@ class MainWindow:
                 self.unsaved_imgs[window.title] = window.img
             else:
                 messagebox.showerror(
-                title="Error", message="Threshold should be between 0 and 1."
+                    title="Error", message="Threshold should be between 0 and 1."
                 )
 
     def mean_filter(self):
@@ -477,7 +483,6 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
-    
     def prewitt_vertical_filter(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -489,7 +494,6 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
-    
     def prewitt_horizontal_filter(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -523,7 +527,6 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
-    
     def sobel_horizontal_filter(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -604,8 +607,7 @@ class MainWindow:
             new_img = isotropic_dif(img, t)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
-        
-    
+
     def anisotropic_difussion(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -617,7 +619,6 @@ class MainWindow:
             new_img = anisotropic_diff(img, sigma, t)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
-
 
     def bilateral(self):
         if len(self.windows) == 0:
@@ -632,7 +633,6 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
-
     def global_thresholding(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -641,14 +641,14 @@ class MainWindow:
         else:
             img = self.select_img_from_windows()
             t = 0
-            while(t <= 0 or t >= 255):
+            while (t <= 0 or t >= 255):
                 t = self.ask_for_threshold()
             if len(img.shape) > 2:
                 real_t = np.zeros(len(img[0][0]))
                 for k in range(0, len(img[0][0])):
                     real_t[k] = global_threshold(img[:, :, k], t)
                 new_img = thresholding_color(real_t, img)
-            else:   
+            else:
                 real_t = global_threshold(img, t)
                 new_img = thresholding(real_t, img)
 
@@ -657,7 +657,6 @@ class MainWindow:
             top = Toplevel()
             Label(top, text="Threshold: " + str(real_t)).grid(row=0, column=0, columnspan=3)
             Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
-
 
     def otsu_thresholding(self):
         if len(self.windows) == 0:
@@ -671,7 +670,7 @@ class MainWindow:
                 for k in range(0, len(img[0][0])):
                     real_t[k] = otsu_threshold(img[:, :, k])
                 new_img = thresholding_color(real_t, img)
-            else:   
+            else:
                 real_t = otsu_threshold(img)
                 new_img = thresholding(real_t, img)
 
@@ -680,7 +679,6 @@ class MainWindow:
             top = Toplevel()
             Label(top, text="Threshold: " + str(real_t)).grid(row=0, column=0, columnspan=3)
             Button(top, text="Done", command=top.destroy, padx=20).grid(row=2, column=1)
-
 
     def susan_border(self):
         if len(self.windows) == 0:
@@ -701,7 +699,6 @@ class MainWindow:
                 self.unsaved_imgs[window1.title] = window1.img
                 self.unsaved_imgs[window2.title] = window2.img
 
-
     def canny_border(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -713,7 +710,6 @@ class MainWindow:
             new_img = canny(img, t1, t2)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
-
 
     def active_contours(self):
         if len(self.windows) == 0:
@@ -731,7 +727,6 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
-
     def active_contours_video(self):
         imgs = self.select_video()
         showing_img_window = ImageWindow(self, imgs[0])
@@ -741,11 +736,12 @@ class MainWindow:
         _, mean = pixels_info(first_img[up:down + 1, left:right + 1])
         prev_curve, lin, lout = initialize_marks(first_img, left, up, right, down)
         showing_img_window = ImageWindow(self, imgs[0])
-        self.root.after(10, self.update_active_contours_video, imgs, 0, prev_curve, lin, lout, mean, epsilon, max_iterations,
+        self.root.after(10, self.update_active_contours_video, imgs, 0, prev_curve, lin, lout, mean, epsilon,
+                        max_iterations,
                         showing_img_window)
 
-
-    def update_active_contours_video(self, imgs, current_i, prev_curve, lin, lout, mean, epsilon, max_iterations, window):
+    def update_active_contours_video(self, imgs, current_i, prev_curve, lin, lout, mean, epsilon, max_iterations,
+                                     window):
         img = imgs[current_i]
         new_img, prev_curve, lin, lout = active_contours_vid(img, prev_curve, lin, lout, mean, epsilon, max_iterations)
         window.change_image(new_img)
@@ -753,7 +749,6 @@ class MainWindow:
             self.root.after(10, self.update_active_contours_video, imgs, current_i + 1, prev_curve, lin, lout, mean,
                             epsilon, max_iterations, window)
 
-    
     def hough_transformation(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -768,13 +763,22 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
-    
-    def key_points(self):
+            
+    def harris_corners(self):
         if len(self.windows) == 0:
             window = Toplevel()
             Label(window, text="No Image, please load one").grid(row=0, column=0, columnspan=3)
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
         else:
+            img = self.select_img_from_windows()
+            threshold = self.ask_for_threshold()
+            new_img = harris(img, threshold)
+            window = ImageWindow(self, new_img)
+            self.unsaved_imgs[window.title] = window.img
+
+        
+
+    def key_points(self):
             filename = self.select_filename_from_windows()
             new_img = key_points(filename)
             window = ImageWindow(self, new_img)
@@ -811,7 +815,6 @@ class MainWindow:
                 )
             
 
-
     # Selection mode
     def select(self):
         if len(self.windows) == 0:
@@ -832,11 +835,9 @@ class MainWindow:
                 menu.add_command(label=option[0], command=option[1])
         self.menubar.add_cascade(label=label, menu=menu)
 
-
     def select_img_from_windows(self):
         window = self.select_window()
         return window.img
-
 
     def select_filenames_from_windows(self):
             window_1, window_2 = self.select_2_windows()
@@ -847,7 +848,7 @@ class MainWindow:
             window = self.select_window()
             return window.filename
 
-
+        
     def select_window(self):
         if len(self.windows) == 1:
             return self.windows[0]
@@ -916,7 +917,6 @@ class MainWindow:
 
         return image_window_1, image_window_2
 
-    
     def select_save_window(self):
         if len(self.unsaved_imgs) == 1:
             return list(self.unsaved_imgs.items())[0]
@@ -942,7 +942,6 @@ class MainWindow:
             if image_window == window_name:
                 return (image_window, self.unsaved_imgs.get(image_window))
 
-    
     def select_from_to_windows(self):
         if len(self.windows) == 1:
             return (self.windows[0], self.windows[0])
@@ -969,13 +968,12 @@ class MainWindow:
         op_menu_to = OptionMenu(frame, clicked_to, *options)
         op_menu_to.grid(row=3, column=0, columnspan=2)
 
-
         window_name_var_from = StringVar()
         window_name_var_to = StringVar()
 
-        Button(frame, text="Select", command=(lambda: self.set_vars(window_name_var_from, 
-                                                                    clicked_from.get(), 
-                                                                    window_name_var_to, 
+        Button(frame, text="Select", command=(lambda: self.set_vars(window_name_var_from,
+                                                                    clicked_from.get(),
+                                                                    window_name_var_to,
                                                                     clicked_to.get()))).grid(row=3, column=2)
 
         frame.wait_variable(window_name_var_to)
@@ -990,13 +988,11 @@ class MainWindow:
                 window_from = image_window
             if image_window.title == window_to_name:
                 window_to = image_window
-        return(window_from, window_to)
+        return (window_from, window_to)
 
-    
     def set_vars(self, from_var, from_val, to_var, to_val):
         from_var.set(from_val)
         to_var.set(to_val)
-
 
     def get_windows_titles(self):
         titles = []
@@ -1448,7 +1444,6 @@ class MainWindow:
         window.destroy()
         return deviation, threshold
 
-    
     @staticmethod
     def ask_susan_args():
         window = Toplevel()
@@ -1464,19 +1459,19 @@ class MainWindow:
 
         Label(frame, text="Borders and corners on").grid(row=0, column=2)
         button_together = Button(frame,
-                        text="Same Image",
-                        command=(
-                            lambda: (t_var.set(float(t_entry.get())),
-                                     together_var.set(True))),
-                        padx=20)
+                                 text="Same Image",
+                                 command=(
+                                     lambda: (t_var.set(float(t_entry.get())),
+                                              together_var.set(True))),
+                                 padx=20)
         button_together.grid(row=1, column=2)
 
         button_separate = Button(frame,
-                        text="Separate Images",
-                        command=(
-                            lambda: (t_var.set(float(t_entry.get())),
-                                     together_var.set(False))),
-                        padx=20)
+                                 text="Separate Images",
+                                 command=(
+                                     lambda: (t_var.set(float(t_entry.get())),
+                                              together_var.set(False))),
+                                 padx=20)
         button_separate.grid(row=2, column=2)
 
         frame.wait_variable(t_var)
@@ -1541,7 +1536,7 @@ class MainWindow:
                             lambda: (epsilon_var.set(float(epsilon_entry.get())),
                                      theta_var.set(float(theta_entry.get())),
                                      rho_var.set(float(rho_entry.get())))),
-                                     
+
                         padx=20)
         button.grid(row=1, column=3)
 
@@ -1581,7 +1576,6 @@ class MainWindow:
     @staticmethod
     def get_selection(img):
         return img.selection_mode(select_only=True)
-
 
     def select_video(self):
         filenames = self.select_folder()
