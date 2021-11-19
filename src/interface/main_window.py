@@ -172,7 +172,7 @@ class MainWindow:
         self.unsaved_imgs[window.title] = window.img
 
     def open_test(self):
-        window = ImageWindow(self, load('./photos/test_images/pgm/test.pgm'))
+        window = ImageWindow(self, load('./photos/test_images/pgm/test.pgm'), './photos/test_images/pgm/test.pgm')
         self.unsaved_imgs[window.title] = window.img
 
     # Get pixel value
