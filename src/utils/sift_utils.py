@@ -11,7 +11,7 @@ def key_points(filename):
 
     return img
 
-def sift(filename_1: str, filename_2: str, n, m = 10):
+def sift(filename_1: str, filename_2: str, threshold, m = 10):
     img_1 = cv.imread(filename_1)
     img_2 = cv.imread(filename_2)
 
@@ -24,17 +24,21 @@ def sift(filename_1: str, filename_2: str, n, m = 10):
     keypoints_2, descriptors_2 = sift.detectAndCompute(img_2,None)
 
     #feature matching
-    bf = cv.BFMatcher_create(cv.NORM_L2, crossCheck=True)
+    bf = cv.BFMatcher_create(cv.NORM_L2, crossCheck=False)
 
     matches = bf.match(descriptors_1, descriptors_2)
-    matches = sorted(matches, key = lambda x:x.distance)
+    total_matches_count = len(matches)
+    valid_matches = []
+    for match in matches:
+        if match.distance <= threshold:
+            valid_matches.append(match)
+    valid_matches_count = len(valid_matches)
+    valid_matches = sorted(valid_matches, key = lambda x:x.distance)
 
-    threshold = min(len(descriptors_1), len(descriptors_2)) * n
+    max_matches = min(valid_matches_count, m)
 
-    max_matches = min(len(matches), m)
+    img_3 = cv.drawMatches(img_1, keypoints_1, img_2, keypoints_2, valid_matches[:max_matches], img_2, flags=2)
 
-    img_3 = cv.drawMatches(img_1, keypoints_1, img_2, keypoints_2, matches[:max_matches], img_2, flags=2)
-
-    return img_3, len(matches), threshold
+    return img_3, valid_matches_count/total_matches_count
 
 

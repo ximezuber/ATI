@@ -792,18 +792,18 @@ class MainWindow:
             Button(window, text="Done", command=window.destroy, padx=20).grid(row=2, column=1)
         else:
             filename_1, filename_2 = self.select_filenames_from_windows()
-            n, show = self.ask_for_sift_arg()
+            n, threshold, show = self.ask_for_sift_arg()
             if 0.0 <= n <= 1.0:
-                new_img, matches, threshold = sift(filename_1, filename_2, n, show)
+                new_img, matches = sift(filename_1, filename_2, threshold, show)
                 info_window = Toplevel()
                 frame = Frame(info_window)
                 frame.pack()
-                if (matches >= threshold):
-                    Label(frame, text="They are the same image with " + str(matches) + " matches and a threshold of " + str(threshold))\
+                if (matches >= n):
+                    Label(frame, text="They are the same image with " + str(matches * 100) + "% matches.")\
                         .grid(row=0, column=0, columnspan=3)
                     Button(frame, text="Done", command=info_window.destroy, padx=20).grid(row=2, column=1)
                 else:
-                    Label(frame, text="They are not the same image. (Matches: " + str(matches) + ", threshold: " + str(threshold) +  ")")\
+                    Label(frame, text="They are not the same image. (Matches: " + str(matches * 100) + "%)")\
                         .grid(row=0, column=0, columnspan=3)
                     Button(frame, text="Done", command=info_window.destroy, padx=20).grid(row=2, column=1)
 
@@ -1282,29 +1282,36 @@ class MainWindow:
         frame = Frame(window)
         frame.pack()
 
-        Label(frame, text="Enter threshold of matches:").grid(row=0, column=1)
-        n_entry = Entry(frame, width=10)
-        n_entry.grid(row=1, column=1)
+        Label(frame, text="Enter threshold for distance:").grid(row=0, column=1)
+        threshold_entry = Entry(frame, width=10)
+        threshold_entry.grid(row=1, column=1)
 
-        Label(frame, text="Enter number of matches to show:").grid(row=2, column=1)
+        Label(frame, text="Enter threshold of matches:").grid(row=2, column=1)
+        n_entry = Entry(frame, width=10)
+        n_entry.grid(row=3, column=1)
+
+        Label(frame, text="Enter number of matches to show:").grid(row=4, column=1)
         show_entry = Entry(frame, width=10)
-        show_entry.grid(row=3, column=1)
+        show_entry.grid(row=5, column=1)
 
         n_var = DoubleVar()
+        threshold_var = DoubleVar()
         show_var = IntVar()
         button = Button(frame,
                         text="Enter",
                         command=(
                             lambda: (n_var.set(float(n_entry.get())),
+                                    threshold_var.set(float(threshold_entry.get())),
                                      show_var.set(int(show_entry.get())))),
                         padx=20)
-        button.grid(row=3, column=2)
+        button.grid(row=5, column=2)
         
         frame.wait_variable(n_var)
         n = n_var.get()
+        threshold = threshold_var.get()
         show = show_var.get()
         window.destroy()
-        return n, show
+        return n, threshold, show
 
 
     @staticmethod
