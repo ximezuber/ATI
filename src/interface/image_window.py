@@ -9,7 +9,7 @@ from src.interface.mouse_selector import Application
 
 
 class ImageWindow:
-    def __init__(self, main_window, img):
+    def __init__(self, main_window, img, filename=None):
         # Internal variables
         self.img = img
         self.tk_img = ImageTk.PhotoImage(image=Image.fromarray(self.img))
@@ -17,6 +17,7 @@ class ImageWindow:
         self.title = "Image " + str(new_id + 1)
         self.main_window = main_window
         self.id = new_id
+        self.filename = filename
 
         # Window layout
         self.top = Toplevel(main_window.root)
