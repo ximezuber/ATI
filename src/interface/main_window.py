@@ -95,7 +95,8 @@ class MainWindow:
                                  ("Otsu", self.otsu_thresholding)]
 
         object_detectors_options = [('S.I.F.T Key Points', self.key_points),
-                                    ('S.I.F.T', self.sift)]
+                                    ('S.I.F.T', self.sift),
+                                    ('S.I.F.T Video', self.sift_video)]
 
         menu_options = {'Image': image_menu_options,
                         'Edit': edit_menu_options,
@@ -748,6 +749,18 @@ class MainWindow:
         if current_i < len(imgs) - 1:
             self.root.after(10, self.update_active_contours_video, imgs, current_i + 1, prev_curve, lin, lout, mean,
                             epsilon, max_iterations, window)
+
+    def sift_video(self):
+        filenames = self.select_video_filenames()
+        n, threshold, show = self.ask_for_sift_arg()
+        showing_img_window = ImageWindow(self, load(filenames[0]))
+        self.root.after(100, self.update_sift_video, filenames[0], filenames, 1, threshold, show, showing_img_window)
+
+    def update_sift_video(self, img_filename, filenames, current_i, threshold, show, window):
+        new_img, matches = sift(img_filename, filenames[current_i], threshold, show)
+        window.change_image(new_img)
+        if current_i < len(filenames) - 1:
+            self.root.after(100, self.update_sift_video, filenames[0], filenames, current_i + 1, threshold, show, window)
 
     def hough_transformation(self):
         if len(self.windows) == 0:
@@ -1590,6 +1603,9 @@ class MainWindow:
         for filename in filenames:
             imgs.append(load(filename))
         return imgs
+
+    def select_video_filenames(self):
+        return self.select_folder()
 
     def select_folder(self):
         d = filedialog.askdirectory(initialdir="./videos")
