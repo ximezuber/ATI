@@ -11,7 +11,7 @@ def key_points(filename):
 
     return img
 
-def sift(filename_1: str, filename_2: str, threshold, m = 10):
+def sift(filename_1: str, filename_2: str, threshold, m = 10, keypoints_1=None, descriptors_1=None):
     img_1 = cv.imread(filename_1)
     img_2 = cv.imread(filename_2)
 
@@ -20,7 +20,8 @@ def sift(filename_1: str, filename_2: str, threshold, m = 10):
 
     sift = cv.SIFT_create()
 
-    keypoints_1, descriptors_1 = sift.detectAndCompute(img_1,None)
+    if keypoints_1 == None:
+        keypoints_1, descriptors_1 = sift.detectAndCompute(img_1,None)
     keypoints_2, descriptors_2 = sift.detectAndCompute(img_2,None)
 
     #feature matching
@@ -39,6 +40,6 @@ def sift(filename_1: str, filename_2: str, threshold, m = 10):
 
     img_3 = cv.drawMatches(img_1, keypoints_1, img_2, keypoints_2, valid_matches[:max_matches], img_2, flags=2)
 
-    return img_3, valid_matches_count/total_matches_count
+    return img_3, valid_matches_count/total_matches_count, keypoints_1, descriptors_1
 
 

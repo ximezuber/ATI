@@ -1,6 +1,7 @@
 import os
 import time
 
+import matplotlib.pyplot as plt
 from PIL import ImageTk
 
 from src.utils.mask_utils import *
@@ -751,16 +752,22 @@ class MainWindow:
                             epsilon, max_iterations, window)
 
     def sift_video(self):
-        filenames = self.select_video_filenames()
+        filenames, img_filename = self.select_video_filenames()
+        print(img_filename)
         n, threshold, show = self.ask_for_sift_arg()
         showing_img_window = ImageWindow(self, load(filenames[0]))
-        self.root.after(100, self.update_sift_video, filenames[0], filenames, 1, threshold, show, showing_img_window)
+        matches_list = []
+        self.root.after(100, self.update_sift_video, img_filename, filenames, 0, threshold, show, showing_img_window, matches_list)
 
-    def update_sift_video(self, img_filename, filenames, current_i, threshold, show, window):
-        new_img, matches = sift(img_filename, filenames[current_i], threshold, show)
+    def update_sift_video(self, img_filename, filenames, current_i, threshold, show, window, matches_list, kp1=None, d1=None):
+        new_img, matches, kp1, d1 = sift(img_filename, filenames[current_i], threshold, show, kp1, d1)
+        matches_list.append(matches)
         window.change_image(new_img)
         if current_i < len(filenames) - 1:
-            self.root.after(100, self.update_sift_video, filenames[0], filenames, current_i + 1, threshold, show, window)
+            self.root.after(100, self.update_sift_video, img_filename, filenames, current_i + 1, threshold, show, window, matches_list, kp1, d1)
+        else:
+            plt.plot(matches_list)
+            plt.show()
 
     def hough_transformation(self):
         if len(self.windows) == 0:
@@ -807,7 +814,7 @@ class MainWindow:
             filename_1, filename_2 = self.select_filenames_from_windows()
             n, threshold, show = self.ask_for_sift_arg()
             if 0.0 <= n <= 1.0:
-                new_img, matches = sift(filename_1, filename_2, threshold, show)
+                new_img, matches, _, _ = sift(filename_1, filename_2, threshold, show)
                 info_window = Toplevel()
                 frame = Frame(info_window)
                 frame.pack()
@@ -1605,7 +1612,8 @@ class MainWindow:
         return imgs
 
     def select_video_filenames(self):
-        return self.select_folder()
+        filenames = self.select_folder()
+        return filenames[:-2], filenames[-1]
 
     def select_folder(self):
         d = filedialog.askdirectory(initialdir="./videos")
