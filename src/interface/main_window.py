@@ -754,7 +754,7 @@ class MainWindow:
     def sift_video(self):
         filenames, img_filename = self.select_video_filenames()
         print(img_filename)
-        n, threshold, show = self.ask_for_sift_arg()
+        threshold, show = self.ask_for_sift_video_arg()
         showing_img_window = ImageWindow(self, load(filenames[0]))
         matches_list = []
         self.root.after(100, self.update_sift_video, img_filename, filenames, 0, threshold, show, showing_img_window, matches_list)
@@ -1332,6 +1332,38 @@ class MainWindow:
         show = show_var.get()
         window.destroy()
         return n, threshold, show
+
+
+    @staticmethod
+    def ask_for_sift_video_arg():
+        window = Toplevel()
+        frame = Frame(window)
+        frame.pack()
+
+        Label(frame, text="Enter threshold for distance:").grid(row=0, column=1)
+        threshold_entry = Entry(frame, width=10)
+        threshold_entry.grid(row=1, column=1)
+
+
+        Label(frame, text="Enter number of matches to show:").grid(row=2, column=1)
+        show_entry = Entry(frame, width=10)
+        show_entry.grid(row=3, column=1)
+
+        threshold_var = DoubleVar()
+        show_var = IntVar()
+        button = Button(frame,
+                        text="Enter",
+                        command=(
+                            lambda: (threshold_var.set(float(threshold_entry.get())),
+                                     show_var.set(int(show_entry.get())))),
+                        padx=20)
+        button.grid(row=3, column=2)
+        
+        frame.wait_variable(threshold_var)
+        threshold = threshold_var.get()
+        show = show_var.get()
+        window.destroy()
+        return threshold, show
 
 
     @staticmethod
