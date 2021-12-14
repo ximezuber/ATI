@@ -70,7 +70,7 @@ def sift_detector(filename_1: str, filename_2: str, threshold, n, m = 10, keypoi
 
     max_matches = min(valid_matches_count, m)
 
-    p1, p2 = get_rectangle(valid_matches, keypoints_2)
+    p1, p2 = get_rectangle(valid_matches, keypoints_2, img_2.shape[0], img_2.shape[1])
 
     if valid_matches_count > n:
         img_3 = cv.rectangle(img_2, (int(p1[0]), int(p1[1])), (int(p2[0]), int(p2[1])), (255, 0, 0), 2)
@@ -81,22 +81,35 @@ def sift_detector(filename_1: str, filename_2: str, threshold, n, m = 10, keypoi
     return img_3, valid_matches_count/total_matches_count, keypoints_1, descriptors_1
 
 
-def get_rectangle(vaid_matches, keypoints_2):
-    if len(vaid_matches) <= 0:
-        return -1 , -1
-    first = keypoints_2[vaid_matches[0].trainIdx]
-    tl_x = first.pt[0]
-    tl_y = first.pt[1]
-    br_x = first.pt[0]
-    br_y = first.pt[1]
+def get_rectangle(vaid_matches, keypoints_2, width, height):
+    # tl_x = width
+    # tl_y = height
+    # br_x = 0
+    # br_y = 0
+    # for match in vaid_matches:
+    #     index = match.trainIdx
+    #     keypoint = keypoints_2[index]
+    #     if tl_x > keypoint.pt[0] or tl_y > keypoint.pt[1]:
+    #         tl_x = keypoint.pt[0]
+    #         tl_y = keypoint.pt[1]
+    #     if br_x < keypoint.pt[0] or br_y < keypoint.pt[1]:
+    #         br_x = keypoint.pt[0]
+    #         br_y = keypoint.pt[1]
+    
+    tl_x = width
+    tl_y = height
+    br_x = -1
+    br_y = -1
     for match in vaid_matches:
         index = match.trainIdx
         keypoint = keypoints_2[index]
-        if tl_x > keypoint.pt[0] or tl_y > keypoint.pt[1]:
+        if tl_x > keypoint.pt[0]:
             tl_x = keypoint.pt[0]
-            tl_y = keypoint.pt[1]
-        if br_x < keypoint.pt[0] or br_y < keypoint.pt[1]:
+        if br_x < keypoint.pt[0]:
             br_x = keypoint.pt[0]
+        if tl_y > keypoint.pt[1]:
+            tl_y = keypoint.pt[1]
+        if br_y < keypoint.pt[1]:
             br_y = keypoint.pt[1]
 
     return (tl_x, tl_y), (br_x, br_y)
