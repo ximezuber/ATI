@@ -701,6 +701,7 @@ class MainWindow:
                 self.unsaved_imgs[window1.title] = window1.img
                 self.unsaved_imgs[window2.title] = window2.img
 
+
     def canny_border(self):
         if len(self.windows) == 0:
             window = Toplevel()
@@ -712,6 +713,7 @@ class MainWindow:
             new_img = canny(img, t1, t2)
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
+
 
     def active_contours(self):
         if len(self.windows) == 0:
@@ -729,6 +731,7 @@ class MainWindow:
             window = ImageWindow(self, new_img)
             self.unsaved_imgs[window.title] = window.img
 
+
     def active_contours_video(self):
         imgs = self.select_video()
         showing_img_window = ImageWindow(self, imgs[0])
@@ -742,6 +745,7 @@ class MainWindow:
                         max_iterations,
                         showing_img_window)
 
+
     def update_active_contours_video(self, imgs, current_i, prev_curve, lin, lout, mean, epsilon, max_iterations,
                                      window):
         img = imgs[current_i]
@@ -751,23 +755,26 @@ class MainWindow:
             self.root.after(10, self.update_active_contours_video, imgs, current_i + 1, prev_curve, lin, lout, mean,
                             epsilon, max_iterations, window)
 
+
     def sift_video(self):
         filenames, img_filename = self.select_video_filenames()
         print(img_filename)
-        threshold, show = self.ask_for_sift_video_arg()
+        n, threshold, show = self.ask_for_sift_arg()
         showing_img_window = ImageWindow(self, load(filenames[0]))
         matches_list = []
-        self.root.after(100, self.update_sift_video, img_filename, filenames, 0, threshold, show, showing_img_window, matches_list)
+        self.root.after(100, self.update_sift_video, img_filename, filenames, 0, threshold, n, show, showing_img_window, matches_list)
 
-    def update_sift_video(self, img_filename, filenames, current_i, threshold, show, window, matches_list, kp1=None, d1=None):
-        new_img, matches, kp1, d1 = sift(img_filename, filenames[current_i], threshold, show, kp1, d1)
+
+    def update_sift_video(self, img_filename, filenames, current_i, threshold, n, show, window, matches_list, kp1=None, d1=None):
+        new_img, matches, kp1, d1 = sift_detector(img_filename, filenames[current_i], threshold, n, show, kp1, d1)
         matches_list.append(matches)
         window.change_image(new_img)
         if current_i < len(filenames) - 1:
-            self.root.after(100, self.update_sift_video, img_filename, filenames, current_i + 1, threshold, show, window, matches_list, kp1, d1)
+            self.root.after(100, self.update_sift_video, img_filename, filenames, current_i + 1, threshold, n, show, window, matches_list, kp1, d1)
         else:
             plt.plot(matches_list)
             plt.show()
+
 
     def hough_transformation(self):
         if len(self.windows) == 0:
